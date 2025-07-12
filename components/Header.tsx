@@ -10,14 +10,13 @@ import { useAuth } from '@/context/AuthContext';
 import { Dialog, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiUser, FiX } from 'react-icons/fi';
 
-// Helper component for consistent active/inactive link styling on desktop
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const pathname = usePathname();
     const isActive = pathname === href;
 
-    const baseClasses = "font-medium transition-colors duration-200";
-    const activeClasses = "text-blue-600";
-    const inactiveClasses = "text-gray-600 hover:text-gray-900";
+    const baseClasses = "font-semibold tracking-wide transition-all duration-300 ease-in-out relative py-2 px-3 rounded-xl";
+    const activeClasses = "text-gray-900 dark:text-white shadow-sm";
+    const inactiveClasses = "text-gray-600 hover:text-gray-900 hover:bg-gray-25 hover:shadow-sm dark:text-gray-300";
 
     return (
         <Link
@@ -58,45 +57,42 @@ export default function Navbar({ }: NavbarProps) {
 
     const closeAllMenus = () => {
         setIsMobileMenuOpen(false);
-        // If there were other open menus, close them here too
     };
 
-    // Safely get user name from email, default to 'User'
     const userName = user?.email?.split('@')[0] || 'User';
 
-    // Helper for mobile link active state
     const isMobileLinkActive = (href: string) => pathname === href;
 
     return (
         <>
             {/* Navbar */}
-            <nav className='bg-white/30 backdrop-blur-xl sticky top-0 z-40 w-full border-b border-gray-100 shadow-sm'>
+            <nav className='bg-white/30 dark:bg-black/30 backdrop-blur-xl sticky top-0 z-40 w-full border-b border-gray-100 dark:border-gray-800 shadow-sm'>
                 <div className='max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8'>
-                    <div className='flex justify-between items-center h-20'> {/* Changed from grid to flex */}
+                    <div className='flex justify-between items-center h-20'>
                         {/* Logo */}
                         <div className='flex-shrink-0'>
-                            <Link href="/" className='text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors'>
+                            <Link href="/" className='text-2xl font-bold text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors'>
                                 Habitize
                             </Link>
                         </div>
 
                         {/* Desktop Navigation */}
-                        <div className='hidden md:flex items-center space-x-8'> {/* Increased space for better visual separation */}
+                        <div className='hidden md:flex items-center space-x-8'>
                             <NavLink href="/habits">Habits</NavLink>
                             <NavLink href="/sleep">Sleep</NavLink>
                             <NavLink href="/moments">Moments</NavLink>
                         </div>
 
                         {/* Action Icons (Desktop & Mobile Menu Toggle) */}
-                        <div className='flex items-center space-x-2'> {/* Adjusted space-x */}
+                        <div className='flex items-center space-x-2'>
                             {/* Desktop User/Login Actions */}
                             <div className='hidden md:flex items-center'>
                                 {loading ? (
-                                    <div className='animate-pulse bg-gray-200 rounded-md h-8 w-20'></div>
+                                    <div className='animate-pulse bg-gray-200 dark:bg-gray-700 rounded-md h-8 w-20'></div>
                                 ) : user ? (
-                                    <Menu as="div" className="relative ml-3"> {/* Added ml-3 for spacing */}
+                                    <Menu as="div" className="relative ml-3">
                                         <div>
-                                            <MenuButton className='inline-flex items-center text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'>
+                                            <MenuButton className='inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800'>
                                                 <FiUser className='mr-2 h-5 w-5' />
                                                 {userName} <FiChevronDown className='ml-1 h-4 w-4' />
                                             </MenuButton>
@@ -110,17 +106,17 @@ export default function Navbar({ }: NavbarProps) {
                                             leaveFrom="transform opacity-100 scale-100"
                                             leaveTo="transform opacity-0 scale-95"
                                         >
-                                            <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                            <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black dark:ring-white ring-opacity-5 dark:ring-opacity-20 focus:outline-none">
                                                 <MenuItem>
                                                     {({ focus }) => (
-                                                        <Link href="/profile" className={`${focus ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}>
+                                                        <Link href="/profile" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
                                                             Profile
                                                         </Link>
                                                     )}
                                                 </MenuItem>
                                                 <MenuItem>
                                                     {({ focus }) => (
-                                                        <Link href="/settings" className={`${focus ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}>
+                                                        <Link href="/settings" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
                                                             Settings
                                                         </Link>
                                                     )}
@@ -129,7 +125,7 @@ export default function Navbar({ }: NavbarProps) {
                                                     {({ focus }) => (
                                                         <button
                                                             onClick={handleSignOut}
-                                                            className={`${focus ? 'bg-gray-100' : ''} flex items-center w-full text-left px-4 py-2 text-sm text-red-600`}
+                                                            className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} flex items-center w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400`}
                                                         >
                                                             <FiLogOut className='inline mr-2 h-4 w-4' />
                                                             Sign Out
@@ -144,7 +140,7 @@ export default function Navbar({ }: NavbarProps) {
                                         variant="ghost"
                                         aria-label='Login'
                                         onClick={handleSignIn}
-                                        className="inline-flex items-center text-gray-700 hover:text-blue-600 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 px-3 py-2"
+                                        className="inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 px-3 py-2"
                                     >
                                         <FiLogIn className='mr-2 h-5 w-5' /> Login
                                     </Button>
@@ -158,6 +154,7 @@ export default function Navbar({ }: NavbarProps) {
                                     size="icon"
                                     aria-label="Open menu"
                                     onClick={() => setIsMobileMenuOpen(true)}
+                                    className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <FiMenu className='h-6 w-6' />
                                 </Button>
@@ -180,7 +177,7 @@ export default function Navbar({ }: NavbarProps) {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                        <div className="fixed inset-0 bg-black/30 dark:bg-black/60" aria-hidden="true" />
                     </Transition.Child>
 
                     {/* Mobile Menu Panel */}
@@ -193,14 +190,15 @@ export default function Navbar({ }: NavbarProps) {
                         leaveFrom='translate-x-0'
                         leaveTo='-translate-x-full'
                     >
-                        <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto bg-white flex flex-col">
+                        <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto bg-white dark:bg-gray-900 flex flex-col">
                             <div className='flex h-20 shrink-0 items-center justify-between px-6'>
-                                <h2 className='text-xl font-bold text-gray-900'>Menu</h2>
+                                <h2 className='text-xl font-bold text-gray-900 dark:text-white'>Menu</h2>
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     aria-label='Close Menu'
                                     onClick={() => setIsMobileMenuOpen(false)}
+                                    className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <FiX className="h-6 w-6" />
                                 </Button>
@@ -213,7 +211,7 @@ export default function Navbar({ }: NavbarProps) {
                                                 <Link
                                                     onClick={closeAllMenus}
                                                     href="/habits"
-                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 ${isMobileLinkActive('/habits') ? 'text-blue-600 bg-blue-50' : 'text-gray-900'}`}
+                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 dark:hover:bg-gray-800 ${isMobileLinkActive('/habits') ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
                                                 >
                                                     Habits
                                                 </Link>
@@ -222,7 +220,7 @@ export default function Navbar({ }: NavbarProps) {
                                                 <Link
                                                     onClick={closeAllMenus}
                                                     href="/sleep"
-                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 ${isMobileLinkActive('/sleep') ? 'text-blue-600 bg-blue-50' : 'text-gray-900'}`}
+                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 dark:hover:bg-gray-800 ${isMobileLinkActive('/sleep') ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
                                                 >
                                                     Sleep
                                                 </Link>
@@ -231,31 +229,31 @@ export default function Navbar({ }: NavbarProps) {
                                                 <Link
                                                     onClick={closeAllMenus}
                                                     href="/moments"
-                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 ${isMobileLinkActive('/moments') ? 'text-blue-600 bg-blue-50' : 'text-gray-900'}`}
+                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 dark:hover:bg-gray-800 ${isMobileLinkActive('/moments') ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
                                                 >
                                                     Moments
                                                 </Link>
                                             </li>
                                         </ul>
                                     </li>
-                                    <li className="mt-auto border-t border-gray-200 pt-6">
+                                    <li className="mt-auto border-t border-gray-200 dark:border-gray-700 pt-6">
                                         <div className="space-y-4">
                                             {loading ? (
-                                                <div className="animate-pulse bg-gray-200 rounded-md h-8 w-full"></div>
+                                                <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-md h-8 w-full"></div>
                                             ) : user ? (
                                                 <>
-                                                    <span className="flex items-center text-base font-medium text-gray-700">
+                                                    <span className="flex items-center text-base font-medium text-gray-700 dark:text-gray-300">
                                                         <FiUser className="mr-3 h-5 w-5" /> Welcome, {userName}!
                                                     </span>
-                                                    <Link onClick={closeAllMenus} href="/profile" className="flex items-center text-base font-medium text-gray-900 hover:text-blue-600">
+                                                    <Link onClick={closeAllMenus} href="/profile" className="flex items-center text-base font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400">
                                                         <FiUser className="mr-3 h-5 w-5" /> Profile
                                                     </Link>
-                                                    <Link onClick={closeAllMenus} href="/settings" className="flex items-center text-base font-medium text-gray-900 hover:text-blue-600">
+                                                    <Link onClick={closeAllMenus} href="/settings" className="flex items-center text-base font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400">
                                                         <FiUser className="mr-3 h-5 w-5" /> Settings
                                                     </Link>
                                                     <button
                                                         onClick={() => { handleSignOut(); closeAllMenus(); }}
-                                                        className="flex w-full items-center text-base font-medium text-red-600 hover:text-red-700 transition-colors"
+                                                        className="flex w-full items-center text-base font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
                                                     >
                                                         <FiLogOut className="mr-3 h-5 w-5" /> Sign Out
                                                     </button>
@@ -263,7 +261,7 @@ export default function Navbar({ }: NavbarProps) {
                                             ) : (
                                                 <button
                                                     onClick={() => { handleSignIn(); closeAllMenus(); }}
-                                                    className="flex w-full items-center text-base font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                                                    className="flex w-full items-center text-base font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
                                                 >
                                                     <FiLogIn className="mr-3 h-5 w-5" /> Login / Sign Up
                                                 </button>
@@ -278,7 +276,7 @@ export default function Navbar({ }: NavbarProps) {
             </Transition.Root>
 
             {/* AuthModal */}
-            <AuthModal open={isAuthOpen} onClose={() => setIsAuthOpen} />
+            <AuthModal open={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
         </>
     );
 }
