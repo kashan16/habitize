@@ -1,53 +1,92 @@
 "use client";
 
 import { supabase } from "@/lib/supabaseClient";
+import { useAuthStore } from "@/store/authStore";
 import { User , Session } from "@supabase/supabase-js";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
     user : User | null;
     session : Session | null;
+    loading : boolean;
+    error : string | null;
 }
 
-const AuthContext = createContext<AuthContextType>({ user : null , session : null })
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children } : { children : ReactNode }) {
-    const [ user , setUser ] = useState<User | null>(null);
-    const [ session , setSession ] = useState<Session | null>(null);
-    
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if(!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
+
+interface AuthProviderProps {
+    children : ReactNode;
+}
+
+export const AuthProvider : React.FC<AuthProviderProps> = ({ children }) => {
+    const { user , session , loading , error , initialize } = useAuthStore();
+
     useEffect(() => {
-        const getInitialSession = async () => {
-            const { data : { session } } = await supabase.auth.getSession();
-            setSession(session); 
-        };
-
-        const getInitialUser = async () => {
-            const { data : { user } } = await supabase.auth.getUser();
-            setUser(user);
-        };
-
-        getInitialSession();
-        getInitialUser();
-
+        initialize();
         const { data : { subscription } } = supabase.auth.onAuthStateChange(
-            async (event , session) => {
-                setSession(session);
-                setUser(session?.user ?? null);
+            async( event , session ) => {
+                console.log("Auth state changed" , event , session);
+                useAuthStore.setState({
+                    user : session?.user || null,
+                    session : session || null,
+                    loading : false
+                });
             }
         );
+        return () => {
+            subscription.unsubscribe();
+        };
+    },[initialize]);
 
-        return () => subscription.unsubscribe();
-    },[]);
+    const value : AuthContextType = {
+        user,
+        session,
+        loading,
+        error
+    };
 
     return (
-        <AuthContext.Provider value={{user , session}}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
-    )
+    );
+};
+
+interface WithAuthProps {
+    fallback ?: ReactNode;
 }
 
-//useUser hook
-export function useUser() {
-    const { user } = useContext(AuthContext);
-    return user;
+export const withAuth = <P extends object>(
+    Component : React.ComponentType<P>,
+    options : WithAuthProps = {} 
+) => {
+    const AuthenticatedComponent : React.FC<P> = (props) => {
+        const { user , loading } = useAuth();
+        const { fallback = <div>Please log in to access this page.</div> } = options;
+
+        if(loading) {
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600">
+
+                    </div>
+                </div>
+            );
+        }
+        if(!user) {
+            return <>{fallback}</>
+        }
+        return <Component {...props}/>
+    };
+
+    AuthenticatedComponent.displayName = `withAuth(${Component.displayName || Component.name})`;
+    return AuthenticatorAssertionResponse;
 }
