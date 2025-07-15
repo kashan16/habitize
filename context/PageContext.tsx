@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useContext, useState } from "react";
 
-export type ActivePage = 'Sleep' | 'Habit' | 'Moments' | null;
+export type ActivePage = 'Sleep' | 'Habit' | 'Moments';
 
 interface PageContextType {
     activePage : ActivePage;

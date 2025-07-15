@@ -9,6 +9,7 @@ import { AuthModal } from './AuthModal';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiUser, FiX } from 'react-icons/fi';
+import { usePage } from '@/context/PageContext';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const pathname = usePathname();
@@ -29,6 +30,13 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 };
 
 export default function Navbar() {
+
+    const { activePage , setActivePage }  = usePage();
+
+    const isHabitActive = activePage === 'Habit';
+    const isSleepActive = activePage === 'Sleep';
+    const isMomentsActive = activePage === 'Moments';
+
     const [ isAuthOpen, setIsAuthOpen ] = useState(false);
     const [ isMobileMenuOpen, setIsMobileMenuOpen ] = useState(false);
 
@@ -76,9 +84,15 @@ export default function Navbar() {
 
                         {/* Desktop Navigation */}
                         <div className='hidden md:flex items-center space-x-8'>
-                            <NavLink href="/habits">Habits</NavLink>
-                            <NavLink href="/sleep">Sleep</NavLink>
-                            <NavLink href="/moments">Moments</NavLink>
+                            <Button 
+                            variant={isHabitActive ? 'default' : 'ghost'}
+                            onClick={() => {setActivePage('Habit')}}>Habit</Button>
+                            <Button 
+                            variant={isSleepActive ? 'default' : 'ghost'}
+                            onClick={() => {setActivePage('Sleep')}}>Sleep</Button>
+                            <Button 
+                            variant={isMomentsActive ? 'default' : 'ghost'}
+                            onClick={() => {setActivePage('Moments')}}>Moments</Button>
                         </div>
 
                         {/* Action Icons (Desktop & Mobile Menu Toggle) */}
