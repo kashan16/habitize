@@ -1,9 +1,9 @@
-import Navbar from "@/components/Header";
+import { SleepGraph } from "@/components/SleepGraph";
 
 export default function Home() {
   return (
     <div>
-      <Navbar/>
+      <SleepGraph/> 
     </div>
   );
 }

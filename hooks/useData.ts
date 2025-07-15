@@ -1,7 +1,7 @@
-import { useUser } from "@/context/AuthContext";
 import { Database } from "@/database.types";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
+import { useAuth } from "./useAuth";
 
 type HabitRow = Database['public']['Tables']['habits']['Row'];
 type HabitLogRow = Database['public']['Tables']['habit_logs']['Row'];
@@ -11,9 +11,8 @@ type MomentUpsert = Database['public']['Tables']['memorable_moments']['Insert'];
 type SleepRow = Database['public']['Tables']['sleep_logs']['Row'];
 type SleepUpsert = Database['public']['Tables']['sleep_logs']['Insert'];
 
-const user = useUser();
-
 export function useHabits(month : string) {
+    const { user } = useAuth();
     const [ habit , setHabit ] = useState<HabitRow[]>([]);
     const [ logs , setLogs ] = useState<HabitLogRow[]>([]);
     const [ loading , setLoading ] = useState(true);
@@ -41,7 +40,8 @@ export function useHabits(month : string) {
 }
 
 export function useMoment() {
-  const user = useUser()
+
+  const { user } = useAuth();
   const today = new Date().toISOString().slice(0, 10)
   const [moment, setMoment] = useState<MomentRow | null>(null)
   const [loading, setLoading] = useState(true)
@@ -72,7 +72,8 @@ export function useMoment() {
 }
 
 export function useSleepLogs(month: string) {
-  const user = useUser()
+
+  const { user } = useAuth();
   const [logs, setLogs] = useState<SleepRow[]>([])
   const [loading, setLoading] = useState(true)
 

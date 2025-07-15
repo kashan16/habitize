@@ -4,6 +4,8 @@ import "./globals.css";
 import { SupabaseProvider } from "@/context/SupabaseContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import Navbar from "@/components/Header";
+import { PageProvider } from "@/context/PageContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +35,10 @@ export default function RootLayout({
      disableTransitionOnChange>
       <SupabaseProvider>
         <AuthProvider>
-          {children}
+          <PageProvider>
+            <Navbar/>        
+            {children}
+          </PageProvider>
         </AuthProvider>
       </SupabaseProvider>
     </ThemeProvider>
