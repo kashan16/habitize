@@ -28,19 +28,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ThemeProvider
-     attribute="class"
-     defaultTheme="system"
-     enableSystem
-     disableTransitionOnChange>
-      <SupabaseProvider>
-        <AuthProvider>
-          <PageProvider>
-            <Navbar/>        
-            {children}
-          </PageProvider>
-        </AuthProvider>
-      </SupabaseProvider>
-    </ThemeProvider>
+    // wrap in <html> so Next knows these are global props
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SupabaseProvider>
+            <AuthProvider>
+              <PageProvider>
+                <Navbar />
+                {children}
+              </PageProvider>
+            </AuthProvider>
+          </SupabaseProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

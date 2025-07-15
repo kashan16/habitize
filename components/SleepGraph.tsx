@@ -5,7 +5,7 @@ import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { Input } from "./ui/input";
 
 const formatXAxis = (tickItem : string) => {

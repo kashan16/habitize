@@ -3,7 +3,7 @@
 import { useSupabase } from '@/context/SupabaseContext';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment , useState } from 'react';
 import { Button } from './ui/button';
 import { AuthModal } from './AuthModal'; 
 import { useAuth } from '@/context/AuthContext';
@@ -28,9 +28,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
     );
 };
 
-type NavbarProps = {}
-
-export default function Navbar({ }: NavbarProps) {
+export default function Navbar() {
     const [ isAuthOpen, setIsAuthOpen ] = useState(false);
     const [ isMobileMenuOpen, setIsMobileMenuOpen ] = useState(false);
 

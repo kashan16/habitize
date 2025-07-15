@@ -6,7 +6,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { Button } from "./ui/button";
-import { supabase, useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/store/authStore";
 
 interface AuthModalProps {
     open : boolean;
@@ -28,11 +28,8 @@ export function AuthModal({ open , onClose , defaultMode = 'login'} : AuthModalP
     const [ currMode , setCurrMode ] = useState<AuthMode>(defaultMode);
 
     const {
-        handleSubmit,
         isSubmitting,
-        canSubmit,
         toggleMode,
-        getFieldProps,
         passwordStrength,
         mode,
     } = useAuthForm({
