@@ -11,24 +11,6 @@ import { Dialog, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@head
 import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiUser, FiX } from 'react-icons/fi';
 import { usePage } from '@/context/PageContext';
 
-const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
-    const pathname = usePathname();
-    const isActive = pathname === href;
-
-    const baseClasses = "font-semibold tracking-wide transition-all duration-300 ease-in-out relative py-2 px-3 rounded-xl";
-    const activeClasses = "text-gray-900 dark:text-white shadow-sm";
-    const inactiveClasses = "text-gray-600 hover:text-gray-900 hover:bg-gray-25 hover:shadow-sm dark:text-gray-300";
-
-    return (
-        <Link
-            href={href}
-            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
-        >
-            {children}
-        </Link>
-    );
-};
-
 export default function Navbar() {
 
     const { activePage , setActivePage }  = usePage();
