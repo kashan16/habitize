@@ -6,10 +6,11 @@ import { createContext, ReactNode, useContext } from "react";
 const SupabaseContext = createContext<SupabaseClient | null>(null);
 
 export function SupabaseProvider({ children } : { children : ReactNode }) {
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+    const supabase = url && key ? createClient(url , key) : { auth : { signOut : async () => ({ error : null }) } } as any;
 
     return (
         <SupabaseContext.Provider value={supabase}>
