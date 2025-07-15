@@ -103,14 +103,14 @@ export default function Navbar() {
                                             <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black dark:ring-white ring-opacity-5 dark:ring-opacity-20 focus:outline-none">
                                                 <MenuItem>
                                                     {({ focus }) => (
-                                                        <Link href="/profile" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
+                                                        <Link href="/app/profile" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
                                                             Profile
                                                         </Link>
                                                     )}
                                                 </MenuItem>
                                                 <MenuItem>
                                                     {({ focus }) => (
-                                                        <Link href="/settings" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
+                                                        <Link href="/app/settings" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
                                                             Settings
                                                         </Link>
                                                     )}
