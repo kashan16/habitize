@@ -46,7 +46,7 @@ const Habits = () => {
       await supabase.from('habit_logs').delete().eq('id',exist.id);
       setLogs((l) => l.filter((x) => x.id !== exist.id));
     } else {
-      const { data , error } = await supabase.from('habit_logs').insert({ habit_id : habitId , log_date : today }).single();
+      const { data } = await supabase.from('habit_logs').insert({ habit_id : habitId , log_date : today }).single();
 
       if(data) {
         setLogs((l) => [...l , data]);
@@ -59,7 +59,7 @@ const Habits = () => {
   }
   return (
     <div className='p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Today's Habit</h1>
+      <h1 className='text-2xl font-bold mb-4'>Today&apos;s Habits</h1>
       <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
         {habits.map((habit) => {
           const done = logs.some((log) => log.habit_id === habit.id);
