@@ -2,6 +2,8 @@ import { Database } from "@/database.types";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import useSWR from 'swr';
 
 type HabitRow = Database['public']['Tables']['habits']['Row'];
 type HabitLogRow = Database['public']['Tables']['habit_logs']['Row'];
@@ -71,31 +73,33 @@ export function useMoment() {
   return { moment, loading, upsert }
 }
 
+const fetcher = async ([_key , month , userId] : [string , string , string]) => {
+  const startDate = format(startOfMonth(new Date(`${month}-02`)),'yyyy-MM-dd');
+  const endDate = format(endOfMonth(new Date(`${month}-02`)),'yyyy-MM-dd');
+
+  const { data , error } = await supabase.from('sleep_logs').select('*').eq('user_id',userId).gte('log_date',startDate).lte('log_date',endDate);
+  if(error) throw error;
+  return data;
+}
+
 export function useSleepLogs(month: string) {
 
   const { user } = useAuth();
   const [logs, setLogs] = useState<SleepRow[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!user) return
-    const fetchLogs = async () => {
-      setLoading(true)
-      const { data } = await supabase
-        .from('sleep_logs')
-        .select('*')
-        .gte('log_date', `${month}-01`)
-        .lte('log_date', `${month}-31`)
-      setLogs(data || [])
-      setLoading(false)
-    }
-    fetchLogs()
-  }, [user, month])
+  const { data , error , mutate } = useSWR(user ? ['sleep_logs' , month , user.id ] : null , fetcher);
 
-  const upsert = async (input: { log_date: string; hours: number }) => {
-    const row: SleepUpsert = { user_id: user!.id, ...input }
-    await supabase.from('sleep_logs').upsert(row, { onConflict: 'user_id,log_date' })
-  }
+  const upsert = async (logData : { log_date : string , hours : number }) => {
+    if(!user) throw new Error('User not authenticated');
 
-  return { logs, loading, upsert }
+    const { error } = await supabase.from('sleep_logs').upsert({
+      ...logData,
+      user_id : user.id,
+    });
+
+    if(error) throw error;
+  };
+
+  return { logs : data || [] , loading : !error && !data , error ,  upsert , mutate ,}
 }

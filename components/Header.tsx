@@ -8,7 +8,7 @@ import { Button } from './ui/button';
 import { AuthModal } from './AuthModal'; 
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
-import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiUser, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiSettings, FiUser, FiX } from 'react-icons/fi';
 import { usePage } from '@/context/PageContext';
 
 export default function Navbar() {
@@ -79,65 +79,69 @@ export default function Navbar() {
 
                         {/* Action Icons (Desktop & Mobile Menu Toggle) */}
                         <div className='flex items-center space-x-2'>
-                            {/* Desktop User/Login Actions */}
+                             {/* Desktop User/Login Actions */}
                             <div className='hidden md:flex items-center'>
                                 {loading ? (
-                                    <div className='animate-pulse bg-gray-200 dark:bg-gray-700 rounded-md h-8 w-20'></div>
+                                    <div className='animate-pulse bg-gray-200 dark:bg-gray-700 rounded-md h-10 w-28'></div>
                                 ) : user ? (
-                                    <Menu as="div" className="relative ml-3">
+                                    <Menu as = "div" className = "relative ml-3">
                                         <div>
-                                            <MenuButton className='inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800'>
-                                                <FiUser className='mr-2 h-5 w-5' />
-                                                {userName} <FiChevronDown className='ml-1 h-4 w-4' />
+                                            <MenuButton className='inline-flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-colors rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900'>
+                                                <FiUser className='h-5 w-5'/>
+                                                <FiChevronDown className='ml-1 h-4 w-4 text-gray-500'/>
                                             </MenuButton>
                                         </div>
-                                        <Transition
-                                            as={Fragment}
-                                            enter="transition ease-out duration-100"
-                                            enterFrom="transform opacity-0 scale-95"
-                                            enterTo="transform opacity-100 scale-100"
-                                            leave="transition ease-in duration-75"
-                                            leaveFrom="transform opacity-100 scale-100"
-                                            leaveTo="transform opacity-0 scale-95"
-                                        >
-                                            <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black dark:ring-white ring-opacity-5 dark:ring-opacity-20 focus:outline-none">
+                                        <Transition as={Fragment}
+                                        enter='transition ease-out duration-100'
+                                        enterFrom='transform opacity-0 scale-95'
+                                        enterTo='transform opacity-100 scale-100'
+                                        leave='transition ease-in duration-75'
+                                        leaveFrom='transform opacity-100 scale-100'
+                                        leaveTo='transform opacity-0 scale-95'>
+                                            <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-xl bg-white dark:bg-slate-800 shadow-xl ring-1 ring-black/5 dark:ring-white/10 ring-opacity-5 dark:ring-opacity-20 focus:outline-none">
+                                            <div className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                                                <p className='text-sm font-semibold text-gray-900 dark:text-white' aria-hidden="true">
+                                                    {userName}
+                                                </p>
+                                                <p className='text-xs text-gray-500 dark:text-slate-400 truncate' aria-hidden="true">
+                                                    {user.email}
+                                                </p>
+                                            </div>
+                                            <div className='py-1'>
                                                 <MenuItem>
-                                                    {({ focus }) => (
-                                                        <Link href="/app/profile" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
+                                                    {({ active }) => (
+                                                        <Link href="/app/profile" className={`${active ? 'bg-gray-100 dark:bg-slate-700' : ''} group flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-slate-200 rounded-md transition-colors`}>
+                                                            <FiUser className='mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:text-slate-500'/>
                                                             Profile
                                                         </Link>
                                                     )}
                                                 </MenuItem>
                                                 <MenuItem>
-                                                    {({ focus }) => (
-                                                        <Link href="/app/settings" className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}>
+                                                    {({ active }) => (
+                                                        <Link href="/app/settings" className={`${active ? 'bg-gray-100 dark:bg-slate-700' : ''} group flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-slate-300 rounded-md transition-colors`}>
+                                                            <FiSettings className='mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:text-slate-500'/>
                                                             Settings
                                                         </Link>
                                                     )}
-                                                </MenuItem>
+                                                </MenuItem>                                                
+                                            </div>
+                                            <div className='py-1 border-t border-gray-200 dark:border-slate-700'>
                                                 <MenuItem>
-                                                    {({ focus }) => (
-                                                        <button
-                                                            onClick={handleSignOut}
-                                                            className={`${focus ? 'bg-gray-100 dark:bg-gray-700' : ''} flex items-center w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400`}
-                                                        >
-                                                            <FiLogOut className='inline mr-2 h-4 w-4' />
+                                                    {({ active }) => (
+                                                        <Button onClick={handleSignOut}
+                                                        variant="ghost"
+                                                        className={`${active ? 'bg-red-500 text-white' : 'text-red-600 dark:text-red-400'} group flex items-center w-full text-left px-3 py-2 text-sm rounded-md transition-colors`}>
+                                                            <FiLogOut className={`mr-3 h-5 w-5 ${active ? 'text-white' : 'text-red-500 group-hover:text-red-600'}`}/>
                                                             Sign Out
-                                                        </button>
+                                                        </Button>
                                                     )}
                                                 </MenuItem>
+                                            </div>
                                             </MenuItems>
                                         </Transition>
                                     </Menu>
                                 ) : (
-                                    <Button
-                                        variant="ghost"
-                                        aria-label='Login'
-                                        onClick={handleSignIn}
-                                        className="inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 px-3 py-2"
-                                    >
-                                        <FiLogIn className='mr-2 h-5 w-5' /> Login
-                                    </Button>
+                                    <></>
                                 )}
                             </div>
 

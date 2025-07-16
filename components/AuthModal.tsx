@@ -5,6 +5,7 @@ import { AuthMode, useAuthForm } from "@/hooks/useAuthForm";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
 import { FiX } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
 import { Button } from "./ui/button";
 import { useAuthStore } from "@/store/authStore";
 
@@ -38,7 +39,7 @@ export function AuthModal({ open , onClose , defaultMode = 'login'} : AuthModalP
         onSuccess : onClose,
     })
 
-    const { signUp , signIn , error : authError , loading : authLoading , clearError } = useAuthStore();
+    const { signUp , signIn , signInWithGoogle , error : authError , loading : authLoading , clearError } = useAuthStore();
 
     useEffect(() => {
         if(open) {
@@ -103,6 +104,11 @@ export function AuthModal({ open , onClose , defaultMode = 'login'} : AuthModalP
         } catch(err) {
             console.error('Auth error : ', err);
         }
+    }
+
+    const handleGoogleSignIn = async () => {
+        if(authLoading) return;
+        await signInWithGoogle();
     }
 
     return (
@@ -265,7 +271,23 @@ export function AuthModal({ open , onClose , defaultMode = 'login'} : AuthModalP
                                             ) : (mode === "login" ? "Sign In" : "Create Account")}
                                         </Button>
                                     </form>
-                                    
+                                    <div className="relative my-6">
+                                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                            <div className="w-full border-t border-gray-300 dark:border-gray-600"/>
+                                        </div>
+                                        <div className="relative flex justify-center text-sm">
+                                            <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+                                                Or continue with 
+                                            </span>
+                                        </div>                                        
+                                    </div>
+                                    <div>
+                                        <Button type="button" onClick={handleGoogleSignIn} disabled={authLoading}
+                                            className="w-full py-3 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transistion-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                <FcGoogle/>
+                                                <span>Sign in with google</span>
+                                            </Button>
+                                    </div>
                                     <div className="mt-8 text-center">
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
                                             {mode === "login" ? "Don't have an account?" : "Already have an account?"}

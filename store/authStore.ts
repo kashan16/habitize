@@ -16,6 +16,7 @@ interface AuthState {
     signIn : (email : string , password : string) => Promise<void>;
     signOut : () => Promise<void>;
     clearError : () => void;
+    signInWithGoogle : () => Promise<void>;
     initialize : () => Promise<void>;
 }
 
@@ -100,6 +101,24 @@ export const useAuthStore = create<AuthState>((set,get) =>({
         }
     },
     clearError : () => set({ error : null }),
+
+    signInWithGoogle : async () => {
+        set({ loading : true , error : null });
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider : 'google',
+                options : {
+                    redirectTo : window.location.origin,
+                },
+            });
+            if(error) {
+                throw error;
+            }
+        } catch (error) {
+            console.error("Google sign-In error");
+            set({ error : 'Failed to sign in with google' , loading : false});
+        }
+    },
     
     initialize : async () => {
         set({ loading : true });
