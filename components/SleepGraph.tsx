@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart , Area, Line } from "recharts";
 import { Input } from "./ui/input";
+import { useAuth } from "@/hooks/useAuth";
 
 const formatXAxis = (tickItem : string) => {
     const date = parseISO(tickItem);
@@ -14,6 +15,7 @@ const formatXAxis = (tickItem : string) => {
 };
 
 export function SleepGraph() {
+    const { user } = useAuth();
     const today = useMemo(() => new Date() , []);
     const [ selectedMonth , setSelectedMonth ] = useState(format(today,"yyyy-MM"));
 
@@ -86,6 +88,14 @@ export function SleepGraph() {
         }
         setSelectedMonth(format(newMonthDate,'yyyy-MM'));
     };
+
+    if(!user) {
+        return (
+            <div className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
+                User not authenticated. Authenticate first to use!
+            </div>
+        )
+    }
 
     if(loading && !logs.length) {
         return (

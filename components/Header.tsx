@@ -8,8 +8,15 @@ import { Button } from './ui/button';
 import { AuthModal } from './AuthModal'; 
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
-import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiSettings, FiUser, FiX } from 'react-icons/fi';
-import { usePage } from '@/context/PageContext';
+import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiMoon, FiSettings, FiSmile, FiTarget, FiUser, FiX } from 'react-icons/fi';
+import { ActivePage, usePage } from '@/context/PageContext';
+import { IconType } from 'react-icons/lib';
+
+interface NavItem {
+    name : string;
+    page : ActivePage;
+    icon : IconType;
+}
 
 export default function Navbar() {
 
@@ -21,6 +28,12 @@ export default function Navbar() {
 
     const [ isAuthOpen, setIsAuthOpen ] = useState(false);
     const [ isMobileMenuOpen, setIsMobileMenuOpen ] = useState(false);
+
+    const navItems : NavItem[] = [
+        { name : 'Habit' , page : 'Habit' , icon : FiTarget },
+        { name : 'Sleep' , page : 'Sleep' , icon : FiMoon },
+        { name : 'Moments' , page : 'Moments' , icon : FiSmile },
+    ]
 
     const { user, loading } = useAuth();
     const supabase = useSupabase();
@@ -49,7 +62,10 @@ export default function Navbar() {
 
     const userName = user?.email?.split('@')[0] || 'User';
 
-    const isMobileLinkActive = (href: string) => pathname === href;
+    const handleMobileNavClick = (page : ActivePage) => {
+        setActivePage(page);
+        closeAllMenus();
+    }
 
     return (
         <>
@@ -204,34 +220,17 @@ export default function Navbar() {
                             <nav className="flex flex-1 flex-col px-6 pb-4">
                                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                                     <li>
-                                        <ul role="list" className="-mx-2 space-y-1">
-                                            <li>
-                                                <Link
-                                                    onClick={closeAllMenus}
-                                                    href="/habits"
-                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 dark:hover:bg-gray-800 ${isMobileLinkActive('/habits') ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
-                                                >
-                                                    Habits
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link
-                                                    onClick={closeAllMenus}
-                                                    href="/sleep"
-                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 dark:hover:bg-gray-800 ${isMobileLinkActive('/sleep') ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
-                                                >
-                                                    Sleep
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link
-                                                    onClick={closeAllMenus}
-                                                    href="/moments"
-                                                    className={`block rounded-md py-2 px-2 text-base font-semibold leading-7 hover:bg-gray-100 dark:hover:bg-gray-800 ${isMobileLinkActive('/moments') ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
-                                                >
-                                                    Moments
-                                                </Link>
-                                            </li>
+                                        <ul role="list" className='space-y-1'>
+                                            {navItems.map((item) => (
+                                                <li key={item.name}>
+                                                    <button 
+                                                        onClick={() => handleMobileNavClick(item.page)}
+                                                        className={`group flex w-full items-center rounded-md p-3 text-base font-semibold transition-colors ${activePage === item.page ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'}`}>
+                                                            <item.icon
+                                                                className={`mr-3 h-6 w-6 shrink-0 ${activePage === item.page} ? 'text-blue-600 dark:text-blue-300' : 'text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300'`}/>{item.name}
+                                                        </button>
+                                                </li>
+                                            ))}
                                         </ul>
                                     </li>
                                     <li className="mt-auto border-t border-gray-200 dark:border-gray-700 pt-6">
