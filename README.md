@@ -1,9 +1,8 @@
-````markdown
 # Habitize
 
 > A modern habit‑tracking web app built with Next.js, Supabase & TypeScript.
 
-**Habitize** helps you record your daily “memorable moment,” track multiple habits in a clickable grid, and log your sleep hours to visualize monthly patterns.
+**Habitize** helps you record your daily "memorable moment," track multiple habits in a clickable grid, and log your sleep hours to visualize monthly patterns.
 
 ---
 
@@ -12,7 +11,7 @@
 - **Memorable Moment**  
   Save one text note per day to capture your highlight or reflection.  
 - **Habit Grid**  
-  Define any number of habits and toggle each day’s checkmark in a calendar‑style grid.  
+  Define any number of habits and toggle each day's checkmark in a calendar‑style grid.  
 - **Sleep Tracker**  
   Input hours slept each day and view a month‑long chart of your sleep patterns.  
 
@@ -20,13 +19,13 @@
 
 ## 🧰 Tech Stack
 
-- **Next.js 15** (App Router)  
+- **Next.js 15** (App Router)  
 - **TypeScript**  
 - **Supabase**  
   - Auth (Email/Password)  
   - Row‑Level Security on  
     `memorable_moments`, `habits`, `habit_logs`, `sleep_logs`  
-- **Tailwind CSS** + shadcn/ui + lucide-react for styling & icons  
+- **Tailwind CSS** + shadcn/ui + lucide-react for styling & icons  
 - **React Context** for auth & Supabase client  
 - **Custom React Hooks** (`useHabits`, `useMoment`, `useSleepLogs`)  
 
@@ -39,7 +38,7 @@
 ```bash
 git clone https://github.com/kashan16/habitize.git
 cd habitize
-````
+```
 
 ### 2. Install dependencies
 
@@ -93,31 +92,31 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🔧 Scripts
 
-* `npm run dev`
+* `npm run dev`  
   Start dev server with Turbopack.
-* `npm run build`
+* `npm run build`  
   Create an optimized production build.
-* `npm run start`
+* `npm run start`  
   Run the production build locally.
-* `npm run lint`
+* `npm run lint`  
   Run ESLint across the codebase.
 
 ---
 
 ## 📦 Environment & Deployment
 
-This app is Vercel‑ready—just connect your GitHub repo and set the same `NEXT_PUBLIC_…` variables in Vercel’s dashboard.
+This app is Vercel‑ready—just connect your GitHub repo and set the same `NEXT_PUBLIC_…` variables in Vercel's dashboard.
 
 ---
 
 ## 🤝 Contributing
 
 1. Fork this repo
-2. Create your feature branch:
+2. Create your feature branch:  
    `git checkout -b feature/your-feature`
-3. Commit your changes:
+3. Commit your changes:  
    `git commit -m "feat: add awesome feature"`
-4. Push to your branch:
+4. Push to your branch:  
    `git push origin feature/your-feature`
 5. Open a Pull Request
 
@@ -127,8 +126,4 @@ Please follow conventional commits and run `npm run lint` before submitting.
 
 ## ❤️ License
 
-[MIT](./LICENSE) © 2025 Kashan Yunus
-
-```
-::contentReference[oaicite:0]{index=0}
-```
+[MIT](./LICENSE) © 2025 Kashan Yunus
