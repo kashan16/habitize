@@ -1,5 +1,5 @@
 "use client";
-import { useSleepLogs } from "@/hooks/useData";
+import { useSleepLogs } from "@/hooks/useSleep";
 import { format, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMinute, endOfMonth, addDays } from "date-fns";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -89,13 +89,18 @@ export function SleepGraph() {
         setSelectedMonth(format(newMonthDate,'yyyy-MM'));
     };
 
-    if(!user) {
-        return (
-            <div className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
-                User not authenticated. Authenticate first to use!
-            </div>
-        )
-    }
+  if(!user) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+          Build routines that stick.
+        </h3>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">
+          Sign in to start tracking your sleep.
+        </p>
+      </div>
+    )
+  }
 
     if(loading && !logs.length) {
         return (
