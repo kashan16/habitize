@@ -1,6 +1,6 @@
 # 📱 Habitize
 
-![Habitize Logo](./public/images/habitize-logo.png)
+![Habitize Logo](./images/logo.png)
 
 > A modern, intuitive habit-tracking web application built with Next.js, Supabase, and TypeScript
 
@@ -13,24 +13,24 @@
 
 Habitize is a comprehensive habit-tracking application that helps you build better daily routines. Track your habits, record memorable moments, and monitor your sleep patterns all in one beautiful, user-friendly interface.
 
-![App Screenshot](./public/images/app-overview.png)
+![App Screenshot](./images/frontpage.png)
 
 ## ✨ Features
 
 ### 📝 Memorable Moments
 Capture your daily highlights and reflections with a simple text note. Each day, record one meaningful moment that you want to remember.
 
-![Memorable Moments Feature](./public/images/memorable-moments.png)
+![Memorable Moments Feature](./images/desktop_moments.png)
 
 ### 📊 Habit Grid
 Create and track unlimited habits with an intuitive calendar-style grid interface. Simply click to toggle completion status for each day.
 
-![Habit Grid Interface](./public/images/habit-grid.png)
+![Habit Grid Interface](./images/desktop_habits.png)
 
 ### 😴 Sleep Tracker
 Log your sleep hours and visualize your sleep patterns with beautiful monthly charts. Understanding your sleep trends has never been easier.
 
-![Sleep Tracker Charts](./public/images/sleep-tracker.png)
+![Sleep Tracker Charts](./images/desktop_sleep.png)
 
 ### 🔐 Secure Authentication
 Full user authentication system with email/password login, ensuring your data remains private and secure.
@@ -133,7 +133,7 @@ The application uses the following Supabase tables with Row-Level Security (RLS)
 - **`memorable_moments`**: Daily memorable moment entries
 - **`sleep_logs`**: Sleep duration tracking
 
-![Database Schema](./public/images/database-schema.png)
+![Database Schema](./images/dbSchema.png)
 
 ## 🎨 UI Components
 
@@ -144,13 +144,16 @@ Built with modern, accessible components using shadcn/ui:
 - **Navigation**: Responsive navbar, sidebar navigation
 - **Feedback**: Toast notifications, loading states
 
-![UI Components Showcase](./public/images/ui-components.png)
-
 ## 📱 Mobile Responsiveness
 
 Habitize is fully responsive and works seamlessly across all devices:
 
-![Mobile Screenshots](./public/images/mobile-responsive.png)
+![Mobile Screenshots]
+![Mobile Frontpage](./images/frontpagemobile.png)
+![Mobile Sleep tracker](./images/mobile_sleep.png)
+![Mobile Habit tracker](./images/mobile_habits.png)
+![Mobile Memorable moments](./images/mobile_moments.png)
+![Mobile Navigation](./images/navmenumobile.png)
 
 ## 🧪 Available Scripts
 
@@ -161,28 +164,6 @@ Habitize is fully responsive and works seamlessly across all devices:
 | `npm run start` | Run production build locally |
 | `npm run lint` | Run ESLint across the codebase |
 | `npm run type-check` | Run TypeScript type checking |
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-This app is Vercel-ready for seamless deployment:
-
-1. Connect your GitHub repository to Vercel
-2. Set the environment variables in Vercel's dashboard:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Deploy with one click
-
-![Deployment Flow](./public/images/deployment.png)
-
-### Other Platforms
-
-The app can be deployed to any platform that supports Next.js applications:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
 
 ## 🤝 Contributing
 
