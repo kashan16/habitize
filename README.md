@@ -45,51 +45,6 @@ Full user authentication system with email/password login, ensuring your data re
 - **State Management**: React Context + Custom Hooks
 - **Styling**: Tailwind CSS with custom components
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm/yarn/pnpm
-- Supabase account and project
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/kashan16/habitize.git
-   cd habitize
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   ```
-
-3. **Set up environment variables**
-   
-   Create a `.env.local` file in the project root:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   ```
-
-5. **Open your browser**
-   
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the app in action.
-
 ## 📁 Project Structure
 
 ```
@@ -127,7 +82,6 @@ habitize/
 
 The application uses the following Supabase tables with Row-Level Security (RLS) enabled:
 
-- **`profiles`**: User profile information
 - **`habits`**: User-defined habits
 - **`habit_logs`**: Daily habit completion records
 - **`memorable_moments`**: Daily memorable moment entries
@@ -153,16 +107,6 @@ Habitize is fully responsive and works seamlessly across all devices:
 ![Mobile Habit tracker](./images/mobile_habits.png)
 ![Mobile Memorable moments](./images/mobile_moments.png)
 ![Mobile Navigation](./images/navmenumobile.png)
-
-## 🧪 Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with Turbopack |
-| `npm run build` | Create optimized production build |
-| `npm run start` | Run production build locally |
-| `npm run lint` | Run ESLint across the codebase |
-| `npm run type-check` | Run TypeScript type checking |
 
 ## 🤝 Contributing
 
