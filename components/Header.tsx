@@ -122,24 +122,6 @@ export default function Navbar() {
                                                     {user.email}
                                                 </p>
                                             </div>
-                                            <div className='py-1'>
-                                                <MenuItem>
-                                                    {({ active }) => (
-                                                        <Link href="/app/profile" className={`${active ? 'bg-gray-100 dark:bg-slate-700' : ''} group flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-slate-200 rounded-md transition-colors`}>
-                                                            <FiUser className='mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:text-slate-500'/>
-                                                            Profile
-                                                        </Link>
-                                                    )}
-                                                </MenuItem>
-                                                <MenuItem>
-                                                    {({ active }) => (
-                                                        <Link href="/app/settings" className={`${active ? 'bg-gray-100 dark:bg-slate-700' : ''} group flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-slate-300 rounded-md transition-colors`}>
-                                                            <FiSettings className='mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:text-slate-500'/>
-                                                            Settings
-                                                        </Link>
-                                                    )}
-                                                </MenuItem>                                                
-                                            </div>
                                             <div className='py-1 border-t border-gray-200 dark:border-slate-700'>
                                                 <MenuItem>
                                                     {({ active }) => (
@@ -247,12 +229,6 @@ export default function Navbar() {
                                                     <span className="flex items-center text-base font-medium text-gray-700 dark:text-gray-300">
                                                         <FiUser className="mr-3 h-5 w-5" /> Welcome, {userName}!
                                                     </span>
-                                                    <Link onClick={closeAllMenus} href="/profile" className="flex items-center text-base font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400">
-                                                        <FiUser className="mr-3 h-5 w-5" /> Profile
-                                                    </Link>
-                                                    <Link onClick={closeAllMenus} href="/settings" className="flex items-center text-base font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400">
-                                                        <FiUser className="mr-3 h-5 w-5" /> Settings
-                                                    </Link>
                                                     <button
                                                         onClick={() => { handleSignOut(); closeAllMenus(); }}
                                                         className="flex w-full items-center text-base font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
