@@ -35,7 +35,7 @@ Log your sleep hours and visualize your sleep patterns with beautiful monthly ch
 ### 🔐 Secure Authentication
 Full user authentication system with email/password login, ensuring your data remains private and secure.
 
-![Authentication Flow](https://ibb.co/d0dLKmY7)
+![Authentication Flow](./images/authmodal.png)
 
 ## 🛠️ Tech Stack
 
