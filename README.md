@@ -148,7 +148,6 @@ Built with modern, accessible components using shadcn/ui:
 
 Habitize is fully responsive and works seamlessly across all devices:
 
-![Mobile Screenshots]
 ![Mobile Frontpage](./images/frontpagemobile.png)
 ![Mobile Sleep tracker](./images/mobile_sleep.png)
 ![Mobile Habit tracker](./images/mobile_habits.png)
