@@ -6,8 +6,8 @@ import { useHabits } from "@/hooks/useHabits";
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isFuture, isToday, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import { useState, Fragment } from "react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input"; // Corrected Input import
-import { FiCheck, FiChevronLeft, FiChevronRight, FiLogIn, FiMoreVertical, FiPlus, FiTrash2 } from "react-icons/fi";
+import { Input } from "./ui/input";
+import { FiCheck, FiChevronLeft, FiChevronRight, FiMoreVertical, FiPlus, FiTrash2 } from "react-icons/fi";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import clsx from "clsx";
 
@@ -58,14 +58,12 @@ export function Habits() {
 
   const [newHabitName, setNewHabitName] = useState('');
 
-  // --- Date Calculations ---
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // For mobile view
   const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
   const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
 

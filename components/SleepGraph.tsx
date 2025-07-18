@@ -1,11 +1,11 @@
 "use client";
 import { useSleepLogs } from "@/hooks/useSleep";
-import { format, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMinute, endOfMonth, addDays } from "date-fns";
+import { format, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, addDays } from "date-fns";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart , Area, Line } from "recharts";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart , Line } from "recharts";
 import { Input } from "./ui/input";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -41,9 +41,9 @@ export function SleepGraph() {
         return data;
     },[logs , selectedMonth]);
 
-    const handleDateChange = ( e : React.ChangeEvent<HTMLInputElement> ) => {
+/*     const handleDateChange = ( e : React.ChangeEvent<HTMLInputElement> ) => {
         setLogDate(e.target.value);
-    }
+    } */
 
     const handleHoursChange = (e : React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;

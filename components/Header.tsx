@@ -2,7 +2,7 @@
 
 import { useSupabase } from '@/context/SupabaseContext';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { Fragment , useState } from 'react';
 import { Button } from './ui/button';
 import { AuthModal } from './AuthModal'; 
@@ -38,7 +38,6 @@ export default function Navbar() {
     const { user, loading } = useAuth();
     const supabase = useSupabase();
     const router = useRouter();
-    const pathname = usePathname();
 
     const handleSignOut = async () => {
         try {
