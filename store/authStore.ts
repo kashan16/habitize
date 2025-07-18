@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import type { User, Session } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -105,7 +106,7 @@ export const useAuthStore = create<AuthState>((set,get) =>({
     signInWithGoogle : async () => {
         set({ loading : true , error : null });
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { data , error } = await supabase.auth.signInWithOAuth({
                 provider : 'google',
                 options : {
                     redirectTo : window.location.origin,
