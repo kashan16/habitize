@@ -156,7 +156,13 @@ export default function Navbar() {
                                         </Transition>
                                     </Menu>
                                 ) : (
-                                    <></>
+                                    <Button
+                                        variant="default"
+                                        onClick={handleSignIn}
+                                        className='flex items-center space-x-2'>
+                                            <FiLogIn className='h-4 w-4'/>
+                                            <span>Sign In</span>
+                                    </Button>
                                 )}
                             </div>
 
