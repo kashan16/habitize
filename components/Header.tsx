@@ -8,7 +8,7 @@ import { Button } from './ui/button';
 import { AuthModal } from './AuthModal'; 
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
-import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiMoon, FiSettings, FiSmile, FiTarget, FiUser, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiLogIn, FiLogOut, FiMenu, FiMoon, FiSmile, FiTarget, FiUser, FiX } from 'react-icons/fi';
 import { ActivePage, usePage } from '@/context/PageContext';
 import { IconType } from 'react-icons/lib';
 
