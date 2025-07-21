@@ -5,8 +5,9 @@ import { useMoments } from '@/hooks/useMoment';
 import React, { useState } from 'react'
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
-import { FiClock, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiClock, FiLogIn, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import { AuthModal } from './AuthModal';
 
 const MomentCardSkeleton = () => (
   <div className='p-4 rounded-lg bg-white dark:bg-slate-800/50 animate-pulse'>
@@ -21,6 +22,8 @@ const MomentCardSkeleton = () => (
 );
 
 const Moments = () => {
+  const [ isAuthOpen , setIsAuthOpen ] = useState(false);
+
   const { user } = useAuth();
   const { moments , isLoading , addMoment , deleteMoment } = useMoments();
   const [ newText , setNewText ] = useState('');
@@ -32,19 +35,39 @@ const Moments = () => {
     setNewText('');
   };
 
+  const handleSignIn = () => {
+    setIsAuthOpen(true);
+  }
+
   if(!user) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-slate-800/50 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Capture your thoughts.
-        </h3>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Sign in to save your memorable moments.
-        </p>
-      </div>
-    )
+    <div className="py-24 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+        Capture your thoughts.
+      </h3>
+      <p className="mt-2 text-gray-500 dark:text-gray-400">
+        Sign in to save your memorable moments.
+      </p>
+
+      <Button
+        variant="default"
+        onClick={handleSignIn}
+        className="mt-6 flex items-center space-x-2"
+      >
+        <FiLogIn className="h-4 w-4" />
+        <span>Sign In</span>
+      </Button>
+
+      <AuthModal
+        open={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
+    </div>
+  );
+
   }  
   return (
+    <>
     <div className='py-8 max-w-2xl mx-auto'>
       <div className='mb-12'>
         <h1 className='text-3xl font-bold text-gray-800 dark:text-white mb-4'>
@@ -103,7 +126,8 @@ const Moments = () => {
             </div>
         ))}
       </div>
-    </div>
+    </div>   
+    </>
   );
 }
 

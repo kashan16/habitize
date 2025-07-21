@@ -3,13 +3,14 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useHabits } from "@/hooks/useHabits";
-import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isFuture, isToday, startOfMonth, startOfWeek, subMonths } from "date-fns";
+import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isFuture, isToday, setISODay, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import { useState, Fragment } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { FiCheck, FiChevronLeft, FiChevronRight, FiMoreVertical, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiChevronLeft, FiChevronRight, FiLogIn, FiMoreVertical, FiPlus, FiTrash2 } from "react-icons/fi";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import clsx from "clsx";
+import { AuthModal } from "./AuthModal";
 
 const DesktopSkeleton = () => (
   <div className="space-y-2">
@@ -85,6 +86,12 @@ export function Habits() {
       deleteHabit(habitId);
     }
   };
+
+  const [ isAuthOpen , setIsAuthOpen ] = useState(false);
+
+  const handleSignIn = () => {
+    setIsAuthOpen(true);
+  } 
   
   if (error) {
     return <div className="text-center py-10 text-red-500">Error loading habits: {error.message}</div>;
@@ -95,6 +102,11 @@ export function Habits() {
       <div className="py-24 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-slate-800/50 rounded-lg">
         <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Build routines that stick.</h3>
         <p className="mt-2 text-gray-500 dark:text-gray-400">Sign in to start tracking your habits.</p>
+        <Button variant="default" onClick={handleSignIn} className="mt-6 flex items-center space-x-2">
+          <FiLogIn className="h-4 w-4" />
+          <span>Sign In</span>
+        </Button>
+        <AuthModal open={isAuthOpen} onClose={() => setIsAuthOpen(false)}/>
       </div>
     );
   }

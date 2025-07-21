@@ -4,10 +4,11 @@ import { format, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMon
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiLogIn, FiPlus } from "react-icons/fi";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart , Line } from "recharts";
 import { Input } from "./ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "./AuthModal";
 
 const formatXAxis = (tickItem : string) => {
     const date = parseISO(tickItem);
@@ -18,6 +19,7 @@ export function SleepGraph() {
     const { user } = useAuth();
     const today = useMemo(() => new Date() , []);
     const [ selectedMonth , setSelectedMonth ] = useState(format(today,"yyyy-MM"));
+    const [ isAuthOpen , setIsAuthOpen ] = useState(false);
 
     const { logs , loading , upsert , mutate } = useSleepLogs(selectedMonth);
     const [ logDate , setLogDate ] = useState(format(today,'yyyy-MM-dd'));
@@ -41,7 +43,7 @@ export function SleepGraph() {
         return data;
     },[logs , selectedMonth]);
 
-/*     const handleDateChange = ( e : React.ChangeEvent<HTMLInputElement> ) => {
+    /*const handleDateChange = ( e : React.ChangeEvent<HTMLInputElement> ) => {
         setLogDate(e.target.value);
     } */
 
@@ -89,6 +91,10 @@ export function SleepGraph() {
         setSelectedMonth(format(newMonthDate,'yyyy-MM'));
     };
 
+    const handleSignIn = () => {
+        setIsAuthOpen(true);
+    }
+
   if(!user) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-slate-800/50 rounded-lg">
@@ -98,6 +104,19 @@ export function SleepGraph() {
         <p className="mt-2 text-gray-500 dark:text-gray-400">
           Sign in to start tracking your sleep.
         </p>
+      <Button
+        variant="default"
+        onClick={handleSignIn}
+        className="mt-6 flex items-center space-x-2"
+      >
+        <FiLogIn className="h-4 w-4" />
+        <span>Sign In</span>
+      </Button>
+
+      <AuthModal
+        open={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />        
       </div>
     )
   }

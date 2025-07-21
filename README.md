@@ -170,6 +170,4 @@ If you encounter any issues or have questions:
   <strong>Built with ❤️ by Kashan Yunus</strong>
   <br>
   <em>Track your habits. Transform your life.</em>
-</div>
-
-![Footer Image](./public/images/footer-banner.png)
+</div>s

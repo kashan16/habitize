@@ -76,7 +76,7 @@ export const calculatePasswordStrength = (password: string): PasswordStrength =>
 
 export type LoginFormData  = z.infer<typeof loginSchema>;
 export type SignupFormData = z.infer<typeof signupSchema>;
-export type AuthMode       = 'login' | 'signup';
+export type AuthMode       = 'login' | 'signup' | 'forgotPassword';
 
 interface UseAuthFormProps {
   mode:        AuthMode;

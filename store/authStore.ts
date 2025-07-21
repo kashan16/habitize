@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import type { User, Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -18,6 +19,8 @@ interface AuthState {
     signOut : () => Promise<void>;
     clearError : () => void;
     signInWithGoogle : () => Promise<void>;
+    sendPasswordResetEmail : ( email : string ) => Promise<void>;
+    updatePassword : ( newPassword : string ) => Promise<void>; 
     initialize : () => Promise<void>;
 }
 
@@ -49,6 +52,7 @@ export const useAuthStore = create<AuthState>((set,get) =>({
                 loading : false,
                 error : null
             });
+            toast.success(`Success! We've sent a verification link to ${email}. Please check your inbox and spam folder to complete your registration.`);
         } catch (err) {
             set({
                 error : err instanceof Error ? err.message : 'An error occurred',
@@ -120,7 +124,42 @@ export const useAuthStore = create<AuthState>((set,get) =>({
             set({ error : 'Failed to sign in with google' , loading : false});
         }
     },
-    
+    sendPasswordResetEmail :  async ( email :string ) => {
+        set({ loading : true , error : null });
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email , {
+                redirectTo : `${window.location.origin}/reset-password`,
+            });
+            if(error) {
+                throw error;
+            }
+            toast.success(`A password reset link has been sent on ${email}`);
+            set({ loading : false });
+        } catch ( err ) {
+            const error = err as Error;
+            console.error("Password reset error : ",error);
+            toast.error('An error occured. Please try again later');
+            set({ error : error.message , loading : false });
+        }
+    },
+    updatePassword : async ( newPassword : string ) => {
+        set({ loading : true , error : null });
+        try {
+            const { data , error } = await supabase.auth.updateUser({
+                password : newPassword,
+            });
+            if(error) {
+                throw error;
+            }
+            set({ loading : false , user : data.user });
+            toast.success("Your password has been updated successfully! You can sign in.");
+        } catch ( err ) {
+            const error = err as Error;
+            console.error("Password update error : ",error);
+            toast.error("Failed to update password");
+            set({ error : error.message , loading : false });
+        }
+    },
     initialize : async () => {
         set({ loading : true });
         try {
