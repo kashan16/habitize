@@ -3,7 +3,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useHabits } from "@/hooks/useHabits";
-import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isFuture, isToday, setISODay, startOfMonth, startOfWeek, subMonths } from "date-fns";
+import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isFuture, isToday, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import { useState, Fragment } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";

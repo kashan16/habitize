@@ -262,7 +262,7 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
                                     )}
                                     <div className="mt-8 text-center">
                                         <p className="text-sm text-gray-600 dark:text-gray-400">{currentContent.toggleText}
-                                            <button type="button" onClick={() => { currMode === 'login' ? setCurrMode('signup') : setCurrMode('login'); clearError();}} className="ml-2 font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">{currentContent.toggleLink}</button>
+                                            <button type="button" onClick={() => { if(currMode === 'login') { setCurrMode('signup') } else { setCurrMode('login') }clearError();}} className="ml-2 font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">{currentContent.toggleLink}</button>
                                         </p>
                                     </div>
                                 </div>
