@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import Navbar from "@/components/Header";
 import { PageProvider } from "@/context/PageContext";
+import { HabitProvider } from "@/context/HabitContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,10 +43,12 @@ export default function RootLayout({
         >
           <SupabaseProvider>
             <AuthProvider>
-              <PageProvider>
+              <HabitProvider>
+                <PageProvider>
                 <Navbar />
                 {children}
-              </PageProvider>
+                </PageProvider>
+              </HabitProvider>
             </AuthProvider>
           </SupabaseProvider>
         </ThemeProvider>
