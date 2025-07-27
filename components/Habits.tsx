@@ -28,7 +28,6 @@ import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useHabitContext } from "@/context/HabitContext";
 import type { Habit } from "@/types/habit";
-import { useHabits } from "@/hooks/useHabits";
 
 // Preset color swatches
 const COLOR_PRESETS = [
@@ -143,7 +142,7 @@ const AddHabitForm: React.FC = () => {
         <select
           id="habit-type"
           value={form.habit_type}
-          onChange={e => onChange('habit_type', e.target.value as any)}
+          onChange={e => onChange('habit_type', e.target.value as "boolean" | "counter")}
           className="w-full h-10 px-3 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="boolean">Done / Not Done</option>
@@ -174,7 +173,7 @@ const AddHabitForm: React.FC = () => {
         <select
           id="frequency-type"
           value={form.frequency_type}
-          onChange={e => onChange('frequency_type', e.target.value as any)}
+          onChange={e => onChange('frequency_type', e.target.value as "daily" | "weekly" | "interval" | "custom")}
           className="w-full h-10 px-3 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {frequencyOptions.map(o => <option key={o} value={o} className="capitalize">{o}</option>)}
@@ -242,7 +241,7 @@ const AddHabitForm: React.FC = () => {
         <select
           id="difficulty"
           value={form.difficulty_level}
-          onChange={e => onChange('difficulty_level', e.target.value as any)}
+          onChange={e => onChange('difficulty_level', e.target.value as "medium" | "easy" | "hard")}
           className="w-full h-10 px-3 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {difficultyOptions.map(o => <option key={o} value={o} className="capitalize">{o}</option>)}
@@ -273,7 +272,7 @@ const AddHabitForm: React.FC = () => {
 interface HabitCellProps { habit: Habit; date: Date; }
 const HabitCell: React.FC<HabitCellProps> = ({ habit, date }) => {
   const { toggleHabit, getHabitProgress } = useHabitContext();
-  const { count, target, done } = getHabitProgress(habit.id, date.toISOString());
+  const { count, done } = getHabitProgress(habit.id, date.toISOString());
   const future = isFuture(date) && !isToday(date);
   
   const onToggle = () => { if (!future && habit.habit_type==='boolean') toggleHabit(habit.id, date.toISOString()); };
@@ -281,26 +280,26 @@ const HabitCell: React.FC<HabitCellProps> = ({ habit, date }) => {
   const onDecrement = () => { if (!future && habit.habit_type==='counter' && count>0) toggleHabit(habit.id, date.toISOString(), -1); };
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1 min-w-0">
       <span className="text-xs text-gray-400">{format(date,'E')}</span>
       {habit.habit_type==='boolean' ? (
         <button
           disabled={future}
           onClick={onToggle}
           className={clsx(
-            'w-10 h-10 rounded-full flex items-center justify-center',
+            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
             done ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-slate-700',
             isToday(date) && 'ring-2 ring-blue-500',
             future && 'opacity-50 cursor-not-allowed'
           )}
         >
-          {done ? <FiCheck /> : <span className="text-sm font-bold text-gray-500 dark:text-gray-300">{format(date,'d')}</span>}
+          {done ? <FiCheck className="w-4 h-4" /> : <span className="text-xs font-bold text-gray-500 dark:text-gray-300">{format(date,'d')}</span>}
         </button>
       ) : (
         <div className="flex items-center space-x-1">          
-          <button onClick={onDecrement} className="p-1 rounded disabled:opacity-50"> <FiMinus /> </button>
-          <span className={clsx('text-sm font-medium', done?'text-blue-600':'text-gray-700')}>{count}</span>
-          <button onClick={onIncrement} className="p-1 rounded disabled:opacity-50"> <FiPlus /> </button>
+          <button onClick={onDecrement} className="p-1 rounded disabled:opacity-50"> <FiMinus className="w-3 h-3" /> </button>
+          <span className={clsx('text-sm font-medium min-w-[1.5rem] text-center', done?'text-blue-600':'text-gray-700')}>{count}</span>
+          <button onClick={onIncrement} className="p-1 rounded disabled:opacity-50"> <FiPlus className="w-3 h-3" /> </button>
         </div>
       )}
     </div>
@@ -315,7 +314,7 @@ const HabitRow: React.FC<HabitRowProps> = ({ habit, days }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div className="grid grid-cols-[200px_1fr] gap-2 items-center py-2 border-t">
+    <div className="grid grid-cols-[200px_1fr] gap-4 items-center py-2 border-t">
       <div className="flex justify-between items-center">
         <span className="font-semibold truncate">{habit.name}</span>
         <Menu as="div" className="relative">
@@ -338,7 +337,7 @@ const HabitRow: React.FC<HabitRowProps> = ({ habit, days }) => {
           </Transition>
         </Menu>
       </div>
-      <div className="grid grid-cols-31 gap-2">
+      <div className="flex gap-2 overflow-x-auto">
         {days.map(d => <HabitCell key={d.toISOString()} habit={habit} date={d} />)}
       </div>
     </div>
@@ -372,11 +371,16 @@ export const Habits: React.FC = () => {
 
       {/* Desktop View */}
       <div className="hidden md:block overflow-x-auto p-4 bg-white dark:bg-slate-800/50 rounded-lg">
-        <div className="inline-block min-w-full">
-          <div className="grid grid-cols-[200px_1fr] gap-2 sticky top-0 bg-inherit py-2">
-            <span className="text-sm text-gray-500">HABIT</span>
-            <div className="grid grid-cols-31 gap-2">              
-              {daysInMonth.map(d => <div key={d.toISOString()} className={clsx('text-center', isToday(d)?'text-blue-500':'')}><div className="text-xs">{format(d,'E')}</div><div>{format(d,'d')}</div></div>)}
+        <div className="min-w-full">
+          <div className="grid grid-cols-[200px_1fr] gap-4 sticky top-0 bg-inherit py-2 border-b">
+            <span className="text-sm text-gray-500 font-medium">HABIT</span>
+            <div className="flex gap-2 overflow-x-auto">              
+              {daysInMonth.map(d => (
+                <div key={d.toISOString()} className={clsx('text-center min-w-0 flex-shrink-0', isToday(d)?'text-blue-500':'')}>
+                  <div className="text-xs">{format(d,'E')}</div>
+                  <div className="text-sm font-medium">{format(d,'d')}</div>
+                </div>
+              ))}
             </div>
           </div>
           {loading && <SkeletonGrid rows={3} cols={31} cellClass="bg-gray-200 dark:bg-slate-700/60" />}
@@ -396,11 +400,11 @@ export const Habits: React.FC = () => {
 const SkeletonGrid: React.FC<{ rows: number; cols: number; cellClass: string }> = ({ rows, cols, cellClass }) => (
   <div className="space-y-2">
     {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="grid grid-cols-[200px_1fr] gap-2 items-center py-2">
+      <div key={i} className="grid grid-cols-[200px_1fr] gap-4 items-center py-2">
         <div className={`h-10 rounded-lg ${cellClass} animate-pulse`} />
-        <div className={`grid grid-cols-${cols} gap-2`}>
+        <div className="flex gap-2">
           {Array.from({ length: cols }).map((_, j) => (
-            <div key={j} className={`w-8 h-8 rounded-lg ${cellClass} animate-pulse`} />
+            <div key={j} className={`w-8 h-8 rounded-lg ${cellClass} animate-pulse flex-shrink-0`} />
           ))}
         </div>
       </div>
