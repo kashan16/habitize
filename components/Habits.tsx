@@ -30,7 +30,6 @@ import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/r
 import clsx from "clsx";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
-import { useHabitContext } from "@/context/HabitContext";
 import type { Habit } from "@/types/habit";
 import { useHabits } from "@/hooks/useHabits";
 
@@ -535,11 +534,8 @@ export const Habits : React.FC = () => {
     loading,
     error,
     toggleHabit,
-    createHabit,
     deleteHabit,
     archiveHabit,
-    isHabitCompleted,
-    getHabitStats,
     getHabitProgress,
   } = useHabits(format(currentMonth,'yyyy-MM-01'));
 
