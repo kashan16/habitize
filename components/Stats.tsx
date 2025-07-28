@@ -23,6 +23,23 @@ import { useAuth } from "@/hooks/useAuth";
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
+// Type definitions
+interface HabitLog {
+  log_date: string;
+  done: boolean;
+}
+
+interface HabitStreak {
+  current_streak: number;
+}
+
+interface Habit {
+  id: string;
+  name: string;
+  logs: HabitLog[];
+  streak?: HabitStreak;
+}
+
 interface Trend {
   value: number;
   isPositive: boolean;
@@ -174,14 +191,14 @@ const MonthNavigation = ({ currentMonth, onMonthChange }: {
 };
 
 const CompletionChart = ({ habits, daysInMonth }: { 
-  habits: any[];
+  habits: Habit[];
   daysInMonth: Date[];
 }) => {
   const chartData = useMemo<DayData[]>(() =>
     daysInMonth.map(day => {
       const dayStr = format(day, 'yyyy-MM-dd');
       const completion = habits.reduce((acc, habit) => {
-        const log = habit.logs.find((l: any) => l.log_date === dayStr);
+        const log = habit.logs.find((l: HabitLog) => l.log_date === dayStr);
         return acc + (log?.done ? 1 : 0);
       }, 0);
 
@@ -220,10 +237,10 @@ const CompletionChart = ({ habits, daysInMonth }: {
   );
 };
 
-const HabitBreakdownChart = ({ habits }: { habits: any[] }) => {
+const HabitBreakdownChart = ({ habits }: { habits: Habit[] }) => {
   const chartData = useMemo<HabitBreakdownEntry[]>(() =>
     habits.map((habit, idx) => {
-      const completedCount = habit.logs.filter((log: any) => log.done).length;
+      const completedCount = habit.logs.filter((log: HabitLog) => log.done).length;
       const totalDays = habit.logs.length;
       const percentage = totalDays > 0 ? Math.round((completedCount / totalDays) * 100) : 0;
 
@@ -279,10 +296,10 @@ interface DistributionEntry {
   color: string;
 }
 
-const HabitDistributionChart = ({ habits }: { habits: any[] }) => {
+const HabitDistributionChart = ({ habits }: { habits: Habit[] }) => {
   const chartData = useMemo<DistributionEntry[]>(() => {
     const categories = habits.reduce<Record<string, number>>((acc, habit) => {
-      const completedCount = habit.logs.filter((log: any) => log.done).length;
+      const completedCount = habit.logs.filter((log: HabitLog) => log.done).length;
       const ratio = habit.logs.length > 0 ? completedCount / habit.logs.length : 0;
       const category =
         completedCount === 0 ? 'Not Started' :
@@ -339,11 +356,11 @@ const StatsHeader = ({ currentMonth, onMonthChange }: {
 };
 
 const StatsCards = ({ habits, daysInMonth }: {
-  habits: any[];
+  habits: Habit[];
   daysInMonth: Date[];
 }) => {
   const stats = useMemo(() => {
-    const totalCompletion = habits.reduce((sum, habit) => sum + habit.logs.filter((l: any) => l.done).length, 0);
+    const totalCompletion = habits.reduce((sum, habit) => sum + habit.logs.filter((l: HabitLog) => l.done).length, 0);
     const totalPossible = daysInMonth.length * habits.length;
     const overallPercentage = totalPossible > 0 ? Math.round((totalCompletion / totalPossible) * 100) : 0;
     
@@ -353,7 +370,7 @@ const StatsCards = ({ habits, daysInMonth }: {
     let totalPct = 0;
     
     habits.forEach(h => {
-      const pct = daysInMonth.length > 0 ? (h.logs.filter((l: any) => l.done).length / daysInMonth.length) * 100 : 0;
+      const pct = daysInMonth.length > 0 ? (h.logs.filter((l: HabitLog) => l.done).length / daysInMonth.length) * 100 : 0;
       totalPct += pct;
       if (pct > bestPerc) { 
         bestPerc = pct; 
@@ -409,7 +426,7 @@ const StatsCards = ({ habits, daysInMonth }: {
 };
 
 const ChartsSection = ({ habits, daysInMonth }: {
-  habits: any[];
+  habits: Habit[];
   daysInMonth: Date[];
 }) => (
   <>
