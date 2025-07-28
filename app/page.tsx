@@ -21,7 +21,7 @@ export default function Home() {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-12">
       {Content}
     </div>
   );
