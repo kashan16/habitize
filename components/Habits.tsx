@@ -709,9 +709,9 @@ export const Habits : React.FC = () => {
           <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} aria-label="Previous Month"><FiChevronLeft className="h-5 w-5" /></Button>
           <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 min-w-[150px] text-center">{format(currentMonth, "MMMM yyyy")}</h3>
           <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next Month"><FiChevronRight className="w-5 h-5" /></Button>
-          <Button onClick={() => setIsAddHabitOpen(true)} className="ml-4"><FiPlus className="mr-2 -ml-1"/>Add Habit</Button>
         </div>
       </header>
+
 
       <div className={clsx("mt-8", isMobile ? "space-y-4 px-2" : "bg-white dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700/80 shadow-sm")}>
         {loading && <div className="p-10 text-center text-gray-500">Loading your habits...</div>}
@@ -734,6 +734,9 @@ export const Habits : React.FC = () => {
             <EmptyState onAddHabit={() => setIsAddHabitOpen(true)} />
           </div>
         )}
+        <div className="flex items-center justify-center p-1">
+          <Button onClick={() => setIsAddHabitOpen(true)} className="ml-4"><FiPlus className="mr-2 -ml-1"/>Add Habit</Button>
+        </div>
       </div>
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <AddHabitDialog open={isAddHabitOpen} onClose={() => setIsAddHabitOpen(false)} />  
