@@ -1,13 +1,11 @@
-"use client";
+'use client';
 
-import React, { useState, Fragment, useMemo } from "react";
+import React, { useState, Fragment, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   format,
   isFuture,
   isToday,
   eachDayOfInterval,
-  startOfWeek,
-  endOfWeek,
   subMonths,
   addMonths,
   startOfMonth,
@@ -20,31 +18,76 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiLogIn,
-  FiMoreVertical,
   FiPlus,
   FiMinus,
   FiTrash2,
-  FiArchive
+  FiArchive,
+  FiMoreVertical,
+  FiX
 } from "react-icons/fi";
-import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
+import { Menu, Transition, Dialog, DialogPanel, DialogTitle, RadioGroup, Radio, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Label } from './ui/label';
 import clsx from "clsx";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import type { Habit } from "@/types/habit";
 import { useHabits } from "@/hooks/useHabits";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+
+const useLongPress = (
+  onLongPress: (e: React.MouseEvent | React.TouchEvent) => void,
+  onClick: (e: React.MouseEvent | React.TouchEvent) => void,
+  { delay = 400 } = {}
+) => {
+  const [longPressTriggered, setLongPressTriggered] = useState(false);
+  const timeout = useRef<NodeJS.Timeout | null>(null);
+  const target = useRef<EventTarget | null>(null);
+
+  const start = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    if (event.target) {
+      target.current = event.target;
+      event.target.addEventListener('contextmenu', e => e.preventDefault(), { once: true });
+    }
+    timeout.current = setTimeout(() => {
+      onLongPress(event);
+      setLongPressTriggered(true);
+    }, delay);
+  }, [onLongPress, delay]);
+
+  const clear = useCallback((event: React.MouseEvent | React.TouchEvent, shouldTriggerClick = true) => {
+    timeout.current && clearTimeout(timeout.current);
+    if (shouldTriggerClick && !longPressTriggered) {
+      onClick(event);
+    }
+    setLongPressTriggered(false);
+    if (target.current) {
+      target.current.removeEventListener('contextmenu', e => e.preventDefault());
+    }
+  }, [onClick, longPressTriggered]);
+
+  return {
+    onMouseDown: (e: React.MouseEvent) => start(e),
+    onTouchStart: (e: React.TouchEvent) => start(e),
+    onMouseUp: (e: React.MouseEvent) => clear(e),
+    onMouseLeave: (e: React.MouseEvent) => clear(e, false),
+    onTouchEnd: (e: React.TouchEvent) => clear(e),
+  };
+};
+
 
 const COLOR_PRESETS = [
-  { name: 'Sky Blue',   hex: '#3B82F6' },
+  { name: 'Sky Blue', hex: '#3B82F6' },
   { name: 'Mint Green', hex: '#10B981' },
-  { name: 'Amber',      hex: '#F59E0B' },
-  { name: 'Coral Red',  hex: '#EF4444' },
-  { name: 'Purple',     hex: '#8B5CF6' },
-  { name: 'Teal',       hex: '#06B6D4' },
+  { name: 'Amber', hex: '#F59E0B' },
+  { name: 'Coral Red', hex: '#EF4444' },
+  { name: 'Purple', hex: '#8B5CF6' },
+  { name: 'Teal', hex: '#06B6D4' },  
 ];
 
 interface AddHabitFormProps {
-  onHabitCreated ?: () => void;
+  onHabitCreated : () => void;
 }
+
 const AddHabitForm: React.FC<AddHabitFormProps> = ({ onHabitCreated }) => {
   const [form, setForm] = useState({
     name: "",
@@ -55,26 +98,32 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onHabitCreated }) => {
     frequency_days: [] as number[],
     frequency_interval_days: 1,
     description: "",
-    difficulty_level: 'medium' as 'easy' | 'medium' | 'hard',
-    category_id: ""
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const { createHabit } = useHabits(format(new Date(), 'yyyy-MM-01'));
-
-  const dayOptions = [0, 1, 2, 3, 4, 5, 6];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const frequencyOptions = ['daily', 'weekly', 'interval', 'custom'] as const;
-  const difficultyOptions = ['easy', 'medium', 'hard'] as const;
+  
+  const habitTypeOptions = [
+    { value: 'boolean', label: 'Done / Not Done' },
+    { value: 'counter', label: 'Counter' }
+  ] as const;
 
-  const onChange = <K extends keyof typeof form>(key: K, value: typeof form[K]) =>
+  const frequencyOptions = [
+    { value: 'daily', label: 'Daily' },
+    { value: 'weekly', label: 'Specific Days' },
+    { value: 'interval', label: 'Every X Days' }
+  ] as const;
+
+  const onChange = <K extends keyof typeof form>(key: K, value: typeof form[K]) => 
     setForm(f => ({ ...f, [key]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || isSubmitting) return;
-
+    
     setIsSubmitting(true);
+
     try {
       await createHabit({
         name: form.name.trim(),
@@ -82,13 +131,11 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onHabitCreated }) => {
         habit_type: form.habit_type,
         target_count: form.habit_type === 'counter' ? Math.max(1, form.target_count) : undefined,
         frequency_type: form.frequency_type,
-        frequency_days: (form.frequency_type === 'weekly' || form.frequency_type === 'custom') ? form.frequency_days : undefined,
-        frequency_interval_days: form.frequency_type === 'interval' ? Math.max(1, form.frequency_interval_days) : undefined,
+        frequency_days: form.frequency_type === 'weekly' ? form.frequency_days : undefined,
+        frequency_interval_days: form.frequency_type === 'interval' ? form.frequency_interval_days : undefined,
         description: form.description.trim() || undefined,
-        difficulty_level: form.difficulty_level,
-        category_id: form.category_id.trim() || undefined
       });
-      
+
       setForm({
         name: "",
         color: COLOR_PRESETS[0].hex,
@@ -98,345 +145,455 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onHabitCreated }) => {
         frequency_days: [],
         frequency_interval_days: 1,
         description: "",
-        difficulty_level: 'medium',
-        category_id: ""
       });
       
-      onHabitCreated?.();
+      onHabitCreated();
+    } catch (error) {
+      console.error('Failed to create habit:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const isFormValid = () => {
+    if (!form.name.trim()) return false;
+    if (form.frequency_type === 'weekly' && form.frequency_days.length === 0) return false;
+    return true;
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
-      <div className="md:col-span-2">
-        <label htmlFor="habit-name" className="block text-sm font-medium mb-1">
-          Habit Name
-        </label>
-        <Input
-          id="habit-name"
-          value={form.name}
-          onChange={e => onChange('name', e.target.value)}
-          placeholder="e.g., Read for 15 minutes"
-          required
-          disabled={isSubmitting}
+    <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-y-6">
+      <div>
+        <Label htmlFor="habit-name">Habit Name</Label>
+        <Input 
+          id="habit-name" 
+          value={form.name} 
+          onChange={e => onChange('name', e.target.value)} 
+          placeholder="e.g., Read for 15 minutes" 
+          required 
+          disabled={isSubmitting} 
         />
       </div>
 
-      <div className="md:col-span-2">
-        <label className="block text-sm font-medium mb-1">Color</label>
+      <div>
+        <Label>Color</Label>
         <div className="flex items-center space-x-2">
           {COLOR_PRESETS.map(c => (
-            <button
-              key={c.hex}
-              type="button"
-              aria-label={c.name}
+            <button 
+              key={c.hex} 
+              type="button" 
+              aria-label={c.name} 
               disabled={isSubmitting}
               className={clsx(
-                'w-8 h-8 rounded-full border-2 transition-transform transform hover:scale-110 disabled:hover:scale-100',
-                form.color === c.hex ? 'border-gray-800 dark:border-white' : 'border-transparent'
+                'w-8 h-8 rounded-full border-2 transition-transform transform hover:scale-110 disabled:hover:scale-100', 
+                form.color === c.hex ? 'border-gray-900 dark:border-white' : 'border-transparent'
               )}
-              style={{ backgroundColor: c.hex }}
-              onClick={() => onChange('color', c.hex)}
+              style={{ backgroundColor: c.hex }} 
+              onClick={() => onChange('color', c.hex)} 
             />
           ))}
-          <input
-            type="color"
-            value={form.color}
-            onChange={e => onChange('color', e.target.value)}
-            disabled={isSubmitting}
-            className="w-8 h-8 p-0 border-none rounded-full bg-transparent cursor-pointer disabled:cursor-not-allowed"
-            aria-label="Custom color picker"
+          <input 
+            type="color" 
+            value={form.color} 
+            onChange={e => onChange('color', e.target.value)} 
+            disabled={isSubmitting} 
+            className="w-8 h-8 p-0 border-none rounded-full bg-transparent cursor-pointer disabled:cursor-not-allowed" 
+            aria-label="Custom color picker" 
           />
         </div>
       </div>
-
-      <div>
-        <label htmlFor="habit-type" className="block text-sm font-medium mb-1">
-          Type
-        </label>
-        <select
-          id="habit-type"
-          value={form.habit_type}
-          onChange={e => onChange('habit_type', e.target.value as "boolean" | "counter")}
-          disabled={isSubmitting}
-          className="w-full h-10 px-3 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          <option value="boolean">Done / Not Done</option>
-          <option value="counter">Counter</option>
-        </select>
-      </div>
+      
+      <RadioGroup value={form.habit_type} onChange={(v) => onChange('habit_type', v)} disabled={isSubmitting}>
+        <Label>Type</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {habitTypeOptions.map(o => (
+            <Radio 
+              key={o.value} 
+              value={o.value} 
+              className={({ checked }) => clsx(
+                'cursor-pointer rounded-lg px-4 py-2 text-center text-sm font-semibold border-2 transition', 
+                checked ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500'
+              )}
+            >
+              {o.label}
+            </Radio>
+          ))}
+        </div>
+      </RadioGroup>
 
       {form.habit_type === 'counter' && (
         <div>
-          <label htmlFor="target-count" className="block text-sm font-medium mb-1">
-            Target
-          </label>
-          <Input
-            id="target-count"
-            type="number"
-            min={1}
-            value={form.target_count}
-            onChange={e => onChange('target_count', Math.max(1, Number(e.target.value)))}
-            placeholder="e.g., 5"
-            disabled={isSubmitting}
+          <Label htmlFor="target-count">Target Goal</Label>
+          <Input 
+            id="target-count" 
+            type="number" 
+            min={1} 
+            value={form.target_count} 
+            onChange={e => onChange('target_count', Math.max(1, Number(e.target.value)))} 
+            placeholder="e.g., 5" 
+            disabled={isSubmitting} 
           />
         </div>
       )}
-
-      <div>
-        <label htmlFor="frequency-type" className="block text-sm font-medium mb-1">
-          Frequency
-        </label>
-        <select
-          id="frequency-type"
-          value={form.frequency_type}
-          onChange={e => onChange('frequency_type', e.target.value as "daily" | "weekly" | "interval" | "custom")}
-          disabled={isSubmitting}
-          className="w-full h-10 px-3 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          {frequencyOptions.map(o => <option key={o} value={o} className="capitalize">{o}</option>)}
-        </select>
-      </div>
+      
+      <RadioGroup value={form.frequency_type} onChange={(v) => onChange('frequency_type', v as any)} disabled={isSubmitting}>
+        <Label>Frequency</Label>
+        <div className="grid grid-cols-3 gap-2">
+          {frequencyOptions.map(o => (
+            <Radio 
+              key={o.value} 
+              value={o.value} 
+              className={({ checked }) => clsx(
+                'cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-semibold border-2 transition', 
+                checked ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500'
+              )}
+            >
+              {o.label}
+            </Radio>
+          ))}
+        </div>
+      </RadioGroup>
 
       {form.frequency_type === 'interval' && (
         <div>
-          <label htmlFor="interval-days" className="block text-sm font-medium mb-1">
-            Every X Days
-          </label>
-          <Input
-            id="interval-days"
-            type="number"
-            min={1}
-            value={form.frequency_interval_days}
-            onChange={e => onChange('frequency_interval_days', Math.max(1, Number(e.target.value)))}
-            placeholder="e.g., 3"
-            disabled={isSubmitting}
+          <Label htmlFor="interval-days">Every X Days</Label>
+          <Input 
+            id="interval-days" 
+            type="number" 
+            min={1} 
+            value={form.frequency_interval_days} 
+            onChange={e => onChange('frequency_interval_days', Math.max(1, Number(e.target.value)))} 
+            placeholder="e.g., 3" 
+            disabled={isSubmitting} 
           />
         </div>
       )}
 
-      {(form.frequency_type === 'weekly' || form.frequency_type === 'custom') && (
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">On These Days</label>
-          <div className="flex gap-2 flex-wrap">
-            {dayOptions.map(d => (
-              <button
-                key={d}
-                type="button"
+      {form.frequency_type === 'weekly' && (
+        <div>
+          <Label>On These Days</Label>
+          <div className="flex gap-1.5 flex-wrap">
+            {dayNames.map((name, index) => (
+              <button 
+                key={index} 
+                type="button" 
                 disabled={isSubmitting}
                 className={clsx(
-                  'px-3 py-1.5 text-sm border rounded-md transition-colors disabled:opacity-50',
-                  form.frequency_days.includes(d)
-                    ? 'bg-blue-500 text-white border-blue-500'
+                  'w-10 h-10 text-sm border rounded-lg transition-colors disabled:opacity-50', 
+                  form.frequency_days.includes(index) 
+                    ? 'bg-blue-500 text-white border-blue-500' 
                     : 'bg-transparent hover:bg-gray-100 dark:hover:bg-slate-700'
                 )}
                 onClick={() => {
-                  const arr = form.frequency_days.includes(d)
-                    ? form.frequency_days.filter(x => x !== d)
-                    : [...form.frequency_days, d].sort();
+                  const arr = form.frequency_days.includes(index) 
+                    ? form.frequency_days.filter(x => x !== index) 
+                    : [...form.frequency_days, index].sort();
                   onChange('frequency_days', arr);
                 }}
-              >{dayNames[d]}</button>
+              >
+                {name}
+              </button>
             ))}
           </div>
+          {form.frequency_type === 'weekly' && form.frequency_days.length === 0 && (
+            <p className="text-sm text-red-500 mt-1">Please select at least one day</p>
+          )}
         </div>
       )}
 
-      <div className="md:col-span-2">
-        <label htmlFor="description" className="block text-sm font-medium mb-1">
-          Description (Optional)
-        </label>
-        <Input
-          id="description"
-          value={form.description}
-          onChange={e => onChange('description', e.target.value)}
-          placeholder="Why is this habit important?"
-          disabled={isSubmitting}
+      <div>
+        <Label htmlFor="description">Description (Optional)</Label>
+        <Input 
+          id="description" 
+          value={form.description} 
+          onChange={e => onChange('description', e.target.value)} 
+          placeholder="Why is this habit important?" 
+          disabled={isSubmitting} 
         />
       </div>
 
-      <div>
-        <label htmlFor="difficulty" className="block text-sm font-medium mb-1">
-          Difficulty
-        </label>
-        <select
-          id="difficulty"
-          value={form.difficulty_level}
-          onChange={e => onChange('difficulty_level', e.target.value as "medium" | "easy" | "hard")}
-          disabled={isSubmitting}
-          className="w-full h-10 px-3 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          {difficultyOptions.map(o => <option key={o} value={o} className="capitalize">{o}</option>)}
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="category" className="block text-sm font-medium mb-1">
-          Category (Optional)
-        </label>
-        <Input
-          id="category"
-          value={form.category_id}
-          onChange={e => onChange('category_id', e.target.value)}
-          placeholder="e.g., Health"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <Button type="submit" disabled={isSubmitting} className="md:col-span-2 h-10">
+      <Button 
+        type="submit" 
+        disabled={isSubmitting || !isFormValid()} 
+        className="h-11 text-base font-semibold mt-4"
+      >
         {isSubmitting ? "Creating..." : "Create Habit"}
       </Button>
     </form>
   );
 };
 
+const AddHabitDialog: React.FC<{ open: boolean, onClose: () => void }> = ({ open, onClose }) => {
+  return (
+    <Transition appear show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+        </Transition.Child>
+        
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <DialogPanel className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl transition-all">
+                <div className="absolute top-0 right-0 pt-4 pr-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-md bg-white dark:bg-slate-800 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+                    aria-label="Close"
+                  >
+                    <span className="sr-only">Close</span>
+                    <FiX className="h-6 w-6" aria-hidden="true" />
+                  </button>
+                </div>
+                
+                <DialogTitle as="h3" className="text-xl font-bold leading-6 text-gray-900 dark:text-gray-100">
+                  Add a New Habit
+                </DialogTitle>
+                
+                <div className="mt-4">
+                    <AddHabitForm onHabitCreated={onClose} />
+                </div>
+                
+              </DialogPanel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>    
+  );
+};
 interface HabitCellProps {
-  habit : Habit;
-  date : Date;
-  onToggle : (habitId : string , date : string , increment ?: number) => Promise<void>;
-  getHabitProgress : (habitId : string , date : string) => {
-    count : number;
-    target : number;
-    percentage : number;
-    done : boolean;
-  };
+  habit: Habit;
+  date: Date;
+  onToggle: (habitId: string, date: string, increment?: number) => Promise<void>;
+  getHabitProgress: (habitId: string, date: string) => { count: number; target: number; percentage: number; done: boolean; };
+  isMobile: boolean;
 }
 
-const HabitCell : React.FC<HabitCellProps> = ({ habit , date , onToggle , getHabitProgress }) => {
-  const { count , done } = getHabitProgress(habit.id , date.toISOString());
+const HabitCell: React.FC<HabitCellProps> = ({ habit, date, onToggle, getHabitProgress, isMobile }) => {
+  const { count, target, percentage, done } = getHabitProgress(habit.id, date.toISOString());
   const future = isFuture(date) && !isToday(date);
-  const [ isUpdating , setIsUpdating ] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'increment' | 'decrement'; show: boolean }>({ type: 'increment', show: false });
 
-  const handleToggle = async () => {
-    if(future || isUpdating) return;
+  const handleAction = async (action: () => Promise<void>) => {
+    if (future || isUpdating) return;
     setIsUpdating(true);
-    try{
-      if(habit.habit_type === 'boolean') {
-        await onToggle(habit.id,date.toISOString());
-      }
-    } finally {
-      setIsUpdating(false);
+    try { 
+      await action(); 
+    } 
+    finally { 
+      setIsUpdating(false); 
     }
   };
 
-  const handleIncrement = async () => {
-    if(future || isUpdating) return;
-    setIsUpdating(true);
-    try {
-      if(habit.habit_type === 'counter') {
-        await onToggle(habit.id,date.toISOString(),1);
-      }
-    } finally {
-      setIsUpdating(false);
+  const showFeedback = (type: 'increment' | 'decrement') => {
+    setFeedback({ type, show: true });
+    setTimeout(() => setFeedback(prev => ({ ...prev, show: false })), 500);
+  };
+
+  const handleIncrement = () => {
+    showFeedback('increment');
+    handleAction(() => onToggle(habit.id, date.toISOString(), 1));
+  };
+
+  const handleDecrement = () => {
+    if (count > 0) {
+      showFeedback('decrement');
+      handleAction(() => onToggle(habit.id, date.toISOString(), -1));
     }
   };
 
-  const handleDecrement = async () => {
-    if(future || count <= 0 || isUpdating) return;
-    setIsUpdating(true);
-    try {
-      if(habit.habit_type === 'counter') {
-        await onToggle(habit.id,date.toISOString(),-1);
-      }
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const handleBooleanToggle = () => handleAction(() => onToggle(habit.id, date.toISOString()));
 
-  return (
-    <div className="flex flex-col items-center justify-center min-w-[2.5rem] h-12">
-      {habit.habit_type === 'boolean' ? (
+  const dayText = format(date, 'd');
+  const clipPathId = `clip-${habit.id}-${format(date, 'yyyyMMdd')}`;
+
+  if (habit.habit_type === 'boolean') {
+    return (
+      <div className="flex-shrink-0 flex flex-col items-center gap-1.5 text-center">
+        <span className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{format(date, 'E')}</span>
         <button
           disabled={future || isUpdating}
-          onClick={handleToggle}
+          onClick={handleBooleanToggle}
           className={clsx(
-            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200',
-            done 
-              ? 'text-white shadow-md' 
-              : 'bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600',
-            isToday(date) && 'ring-2 ring-blue-400 ring-offset-1',
-            (future || isUpdating) && 'opacity-50 cursor-not-allowed'
+            'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 group',
+            done ? 'text-white shadow-md' : 'bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600',
+            isToday(date) && !done && 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900',
+            (future || isUpdating) && 'opacity-50 cursor-not-allowed',
+            'active:scale-95'
           )}
           style={done ? { backgroundColor: habit.color } : {}}
         >
-          {done ? (
-            <FiCheck className="w-4 h-4" />
-          ) : (
-            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-              {format(date, 'd')}
-            </span>
-          )}
+          <div className="flex flex-col items-center">
+            {done ? <FiCheck className="w-6 h-6 text-white/90" /> : <span className={clsx("font-semibold text-xl", 'text-gray-800 dark:text-gray-200')}>{dayText}</span>}
+          </div>
         </button>
-      ) : (
-        <div className="flex flex-col items-center gap-1">          
-          <div className="flex items-center space-x-1">
-            <button 
-              onClick={handleDecrement} 
-              disabled={future || count <= 0 || isUpdating}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            > 
-              <FiMinus className="w-3 h-3" /> 
-            </button>
-            <span className={clsx(
-              'text-sm font-semibold min-w-[1.5rem] text-center px-1',
-              done ? 'text-white px-2 py-1 rounded' : 'text-gray-700 dark:text-gray-300'
+      </div>
+    );
+  }
+
+  const fillPercentage = Math.min(count / target, 1);
+  
+  return (
+    <div className="flex-shrink-0 flex flex-col items-center gap-1.5 text-center">
+      <span className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{format(date, 'E')}</span>
+      <div className="relative">
+        <div
+          className={clsx(
+            'relative rounded-full flex items-center justify-center select-none transition-transform duration-100',
+            'w-14 h-14 overflow-hidden',
+            isToday(date) && 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900',
+            (future || isUpdating) && 'opacity-50 cursor-not-allowed'
+          )}
+        >
+          <svg width="100%" height="100%" viewBox="0 0 56 56" className="absolute inset-0">
+            <defs>
+              <clipPath id={clipPathId}>
+                <rect x="0" y={56 * (1 - fillPercentage)} width="56" height={56 * fillPercentage} />
+              </clipPath>
+            </defs>
+            <circle cx="28" cy="28" r="28" className="text-gray-100 dark:text-slate-700" fill="currentColor"/>
+            <circle cx="28" cy="28" r="28" fill={habit.color} clipPath={`url(#${clipPathId})`} />
+          </svg>
+          <button
+            onClick={handleDecrement}
+            disabled={future || isUpdating || count === 0}
+            className={clsx(
+              'absolute left-0 top-0 w-1/2 h-full z-10 flex items-center justify-center',
+              'transition-all duration-150 rounded-l-full',
+              !future && !isUpdating && count > 0 && 'hover:bg-black/10 active:bg-black/20',
+              count === 0 && 'cursor-not-allowed opacity-50'
             )}
-            style={done ? { backgroundColor: habit.color } : {}}
-            >
-              {count}
+            title={count > 0 ? "Tap to decrease" : "Cannot decrease below 0"}
+          >
+            <FiMinus className={clsx(
+              'w-4 h-4 text-white/70 opacity-0 transition-opacity duration-200',
+              'group-hover:opacity-100'
+            )} />
+          </button>
+
+          <button
+            onClick={handleIncrement}
+            disabled={future || isUpdating}
+            className={clsx(
+              'absolute right-0 top-0 w-1/2 h-full z-10 flex items-center justify-center',
+              'transition-all duration-150 rounded-r-full',
+              !future && !isUpdating && 'hover:bg-black/10 active:bg-black/20'
+            )}
+            title="Tap to increase"
+          >
+            <FiPlus className={clsx(
+              'w-4 h-4 text-white/70 opacity-0 transition-opacity duration-200',
+              'group-hover:opacity-100'
+            )} />
+          </button>
+          <div className="relative z-5 flex flex-col items-center justify-center pointer-events-none">
+            <span className={clsx(
+              "font-semibold text-xl",
+              fillPercentage > 0.5 ? "text-white" : "text-gray-800 dark:text-gray-200"
+            )}>
+              {dayText}
             </span>
-            <button 
-              onClick={handleIncrement} 
-              disabled={future || isUpdating}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            > 
-              <FiPlus className="w-3 h-3" /> 
-            </button>
+            {count > 0 && (
+              <span className={clsx(
+                "text-xs opacity-80",
+                fillPercentage > 0.5 ? "text-white" : "text-gray-500 dark:text-gray-400"
+              )}>
+                {count}
+              </span>
+            )}
           </div>
         </div>
+
+        {feedback.show && (
+          <div className={clsx(
+            'absolute -top-6 left-1/2 transform -translate-x-1/2 z-20',
+            'bg-black/80 text-white text-xs px-2 py-1 rounded',
+            'animate-pulse'
+          )}>
+            {feedback.type === 'increment' ? '+1' : '-1'}
+          </div>
+        )}
+
+      </div>
+
+      {count === 0 && !future && (
+        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+          Tap right to add
+        </div>
       )}
-    </div>    
-  )
-}
+    </div>
+  );
+};
 
 interface HabitRowProps {
-  habit : Habit;
-  days : Date[];
-  onToggle : (habitId : string , date : string , increment ?: number) => Promise<void>;
-  onArchive : (habitId : string) => Promise<void>;
-  onDelete : (habitId : string) => Promise<void>;
-  getHabitProgress : (habitId : string , date : string) =>  {
-    count : number;
-    target : number;
-    percentage : number;
-    done : boolean;
-  };
+  habit: Habit;
+  days: Date[];
+  onToggle: (habitId: string, date: string, increment?: number) => Promise<void>;
+  onArchive: (habitId: string) => Promise<void>;
+  onDelete: (habitId: string) => Promise<void>;
+  getHabitProgress: (habitId: string, date: string) => { count: number; target: number; percentage: number; done: boolean; };
+  isMobile: boolean;
 }
 
-const HabitRow : React.FC<HabitRowProps> = ({ habit, days, onToggle, onArchive, onDelete, getHabitProgress }) => {
-  const [ confirmArchive , setConfirmArchive ] = useState(false);
-  const [ confirmDelete , setConfirmDelete ] = useState(false);
-  const [ isProcessing , setIsProcessing ] = useState(false);
+const HabitRow : React.FC<HabitRowProps> = ({
+  habit,
+  days,
+  onToggle,
+  onArchive,
+  onDelete,
+  getHabitProgress,
+  isMobile
+}) => {
+  const [confirmAction, setConfirmAction] = useState<'archive' | 'delete' | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleArchive = async () => {
-    if(!confirmArchive) {
-      setConfirmArchive(true);
+    useEffect(() => {
+    if (!confirmAction) return;
+
+    const timer = setTimeout(() => {
+      setConfirmAction(null);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [confirmAction]);
+
+   const handleArchive = async () => {
+    if (confirmAction !== 'archive') {
+      setConfirmAction('archive');
       return;
     }
+
     setIsProcessing(true);
     try {
       await onArchive(habit.id);
     } finally {
       setIsProcessing(false);
-      setConfirmArchive(false);
+      setConfirmAction(null);
     }
   };
 
   const handleDelete = async () => {
-    if(!confirmDelete) {
-      setConfirmDelete(true);
+    if (confirmAction !== 'delete') {
+      setConfirmAction('delete');
       return;
     }
 
@@ -445,83 +602,120 @@ const HabitRow : React.FC<HabitRowProps> = ({ habit, days, onToggle, onArchive, 
       await onDelete(habit.id);
     } finally {
       setIsProcessing(false);
-      setConfirmDelete(false);
+      setConfirmAction(null);
     }
   };
+
   return (
-    <div className="grid grid-cols-[240px_1fr] gap-4 items-center py-3 border-t border-gray-100 dark:border-slate-700/50">
-      <div className="flex justify-between items-center pr-4">
+    <div
+      className={clsx(
+        "group transition-colors",
+        isMobile
+          ? "flex flex-col bg-white dark:bg-slate-800/70 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700/80 p-4"
+          : "grid grid-cols-[minmax(220px,1fr)_minmax(300px,3fr)] py-3 border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50/80 dark:hover:bg-slate-800/50"
+      )}
+      onMouseLeave={() => setConfirmAction(null)}
+    >
+      <div className={clsx("flex justify-between items-center", isMobile ? "mb-4" : "pr-4 pl-4")}>
         <div className="flex items-center gap-3 min-w-0">
-          <div 
-            className="w-3 h-3 rounded-full flex-shrink-0" 
-            style={{ backgroundColor: habit.color }}
-          />
+          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
           <div className="min-w-0 flex-1">
-            <span className="font-semibold truncate block">{habit.name}</span>
-            {habit.description && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate block">
-                {habit.description}
-              </span>
-            )}
+            <p className="font-semibold truncate text-gray-800 dark:text-gray-100">{habit.name}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate block">
+              {habit.habit_type === 'counter' ? `Goal: ${habit.target_count || 1}` : habit.description || 'Simple Habit'}
+            </p>
           </div>
         </div>
-        <Menu as="div" className="relative">
-          <MenuButton as={Button} variant="ghost" size="icon" className="flex-shrink-0" disabled={isProcessing}>
-            <FiMoreVertical className="w-4 h-4"/>
-          </MenuButton>
-          <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-            <MenuItems className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-md shadow-lg ring-1 ring-black/5 z-10">
-              <div className="p-1">
-                <MenuItem>{({ active }) => (
-                  <button 
-                    onClick={handleArchive}
-                    disabled={isProcessing}
-                    className={clsx(
-                      'w-full px-2 py-2 flex items-center text-sm rounded disabled:opacity-50',
-                      active ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
+        <div className="flex items-center gap-1">
+          {!isMobile && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleArchive}
+                disabled={isProcessing}
+                className={clsx(
+                  "h-8 w-8 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 dark:hover:text-amber-400",
+                  confirmAction === 'archive' && 'bg-amber-500/10 text-amber-500 dark:text-amber-400'
+                )}
+                title={confirmAction === 'archive' ? "Click again to confirm archive" : "Archive Habit"}
+              >
+                <FiArchive className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDelete}
+                disabled={isProcessing}
+                className={clsx(
+                  "h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-500/10 dark:hover:text-red-400",
+                  confirmAction === 'delete' && 'bg-red-500/10 text-red-500 dark:text-red-400'
+                )}
+                title={confirmAction === 'delete' ? "Click again to confirm delete" : "Delete Habit"}
+              >
+                <FiTrash2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          {isMobile && (
+            <Menu as="div" className="relative">
+              <MenuButton as={Button} variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" disabled={isProcessing}>
+                <FiMoreVertical className="w-4 h-4" />
+              </MenuButton>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <MenuItems className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg ring-1 ring-black/5 z-10 p-1">
+                  <MenuItem>
+                    {({ active }) => (
+                      <button onClick={handleArchive} disabled={isProcessing} className={clsx('w-full px-2 py-2 flex items-center text-sm rounded transition-colors disabled:opacity-50', confirmAction === 'archive' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200' : (active && 'bg-gray-100 dark:bg-slate-700'))}>
+                        <FiArchive className="mr-2 w-4 h-4" /> {confirmAction === 'archive' ? 'Confirm Archive' : 'Archive'}
+                      </button>
                     )}
-                  >
-                    <FiArchive className="mr-2 w-4 h-4"/>
-                    {confirmArchive ? 'Confirm Archive' : 'Archive'}
-                  </button>
-                )}</MenuItem>
-                <MenuItem>{({ active }) => (
-                  <button 
-                    onClick={handleDelete}
-                    disabled={isProcessing}
-                    className={clsx(
-                      'w-full px-2 py-2 flex items-center text-sm rounded disabled:opacity-50',
-                      active ? 'bg-red-50 dark:bg-red-900/20' : ''
+                  </MenuItem>
+                  <MenuItem>
+                    {({ active }) => (
+                      <button onClick={handleDelete} disabled={isProcessing} className={clsx('w-full px-2 py-2 flex items-center text-sm rounded transition-colors disabled:opacity-50 text-red-600 dark:text-red-400', confirmAction === 'delete' ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' : (active && 'bg-gray-100 dark:bg-slate-700'))}>
+                        <FiTrash2 className="mr-2 w-4 h-4" /> {confirmAction === 'delete' ? 'Confirm Delete' : 'Delete'}
+                      </button>
                     )}
-                  >
-                    <FiTrash2 className="mr-2 w-4 h-4"/>
-                    {confirmDelete ? 'Confirm Delete' : 'Delete'}
-                  </button>
-                )}</MenuItem>
-              </div>
-            </MenuItems>
-          </Transition>
-        </Menu>
+                  </MenuItem>
+                </MenuItems>
+              </Transition>
+            </Menu>
+          )}
+        </div>
       </div>
-      <div className="flex gap-1 overflow-x-auto scrollbar-thin">
+      <div className="flex gap-4 overflow-x-auto scrollbar-thin pb-2">
         {days.map(d => (
-          <HabitCell 
-            key={d.toISOString()} 
-            habit={habit} 
-            date={d} 
+          <HabitCell
+            key={d.toISOString()}
+            habit={habit}
+            date={d}
             onToggle={onToggle}
             getHabitProgress={getHabitProgress}
+            isMobile={isMobile}
           />
         ))}
       </div>
-    </div>    
+    </div>
   );
-};
+}
 
 export const Habits : React.FC = () => {
   const { user } = useAuth();
   const [ currentMonth , setCurrentMonth ] = useState(new Date());
   const [ authOpen , setAuthOpen ] = useState(false);
+  const [ isAddHabitOpen , setIsAddHabitOpen ] = useState(false);
+
+  const isMobile = useMediaQuery('(max-width : 768px)');
 
   const daysInCurrentMonth = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -536,224 +730,81 @@ export const Habits : React.FC = () => {
     toggleHabit,
     deleteHabit,
     archiveHabit,
-    getHabitProgress,
+    getHabitProgress
   } = useHabits(format(currentMonth,'yyyy-MM-01'));
 
   const handleMonthChange = (dir : 'prev' | 'next') => {
-    const newMonth = dir === 'prev' ? subMonths(currentMonth,1) : addMonths(currentMonth,1);
+    const newMonth = dir === 'prev' ?
+      subMonths(currentMonth,1) :
+      addMonths(currentMonth,1);
     setCurrentMonth(newMonth);
   }
 
-  if(error) {
-    return (
-      <div className="py-8">
-        <div className="text-red-500 bg-red-500 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <h3 className="font-semibold">Error loading habits</h3>
-          <p className="text-sm mt-1">{error.message}</p>
-        </div>
-      </div>
-    );
+  if (error) {
+    return <div className="py-8"><div className="text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg p-4"><h3 className="font-semibold">Error loading habits</h3><p className="text-sm mt-1">{error.message}</p></div></div>;
   }
-
-  if(!user) {
-    return <UnauthenticatedView onOpen={() => setAuthOpen(true)} open={authOpen} onClose={() => setAuthOpen(false)}/>;
+  if (!user) {
+    return <UnauthenticatedView onOpen={() => setAuthOpen(true)} open={authOpen} onClose={() => setAuthOpen(false)} />;
   }
 
   return (
     <div className="py-8 max-w-full">
-      <header className="flex flex-col sm:flex-row sm:justify-between mb-8">
-        <h1 className="text-3xl font-bold">Habit Tracker</h1>
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 px-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Habit Tracker</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Stay consistent, see progress.</p>
+        </div>
         <div className="flex items-center gap-2 mt-4 sm:mt-0">
-          <Button variant="ghost" size="icon" onClick={() => handleMonthChange('prev')} aria-label="Previous Month">
-            <FiChevronLeft className="h-5 w-5"/>
-          </Button>
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 min-w-[140px] text-center">
-            {format(currentMonth,"MMMM yyyy")}
-          </h3>
-          <Button variant="ghost" size="icon" onClick={() => handleMonthChange('next')}>
-            <FiChevronRight className="w-5 h-5"/>
-          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} aria-label="Previous Month"><FiChevronLeft className="h-5 w-5" /></Button>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 min-w-[150px] text-center">{format(currentMonth, "MMMM yyyy")}</h3>
+          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next Month"><FiChevronRight className="w-5 h-5" /></Button>
+          <Button onClick={() => setIsAddHabitOpen(true)} className="ml-4"><FiPlus className="mr-2 -ml-1"/>Add Habit</Button>
         </div>
       </header>
-      {/* Mobile View */}
-      <div className="md:hidden space-y-4">
-        {loading && <SkeletonGrid rows={3} cols={7} cellClass="bg-gray-200 dark:bg-slate-700/60"/>}
-        {!loading && habits.map(h => (
-          <MobileRow
-            key={h.id}
-            habit={h}
-            onToggle={(id , date , inc) => 
-              toggleHabit(id,date,inc).then(() => undefined)
-            }
-            onArchive={id => archiveHabit(id).then(() => undefined)}
-            onDelete={id => deleteHabit(id).then(() => undefined)}
-            getHabitProgress={getHabitProgress}/>
-        ))}
-      </div>
-      {/* Desktop View */}
-      <div className="hidden md:block overflow-x-auto bg-white dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700">
-        <div className="min-w-full">
-          {/* Header */}
-          <div className="grid grid-cols-[240px_ifr] gap-4 sticky top-0 bg-white dark:bg-slate-800/50 py-4 border-b border-gray-200 dark:border-slate-700 text-center items-center justify-center">
-            <div className="flex items-center">
-{/*               <span className="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
-                Habits
-              </span> */}
-            </div>
-            <div className="flex gap-1 overflow-x-auto scrollbar-thin">
-{/*               {daysInCurrentMonth.map(d => (
-                <div
-                  key={d.toISOString()}
-                  className={clsx(
-                    'text-center min-w-[2.5rem] flex-shrink-0 py-1 rounded transition-colors',
-                    isToday(d)
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-300'
-                  )}>
-                    <div className="text-xs font-medium mb-1">{format(d,'E')}</div>
-                    <div className="text-xs font-semibold">{format(d,'d')}</div>
-                  </div>
-              ))} */}
-            </div>
+
+      <div className={clsx("mt-8", isMobile ? "space-y-4 px-2" : "bg-white dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700/80 shadow-sm")}>
+        {loading && <div className="p-10 text-center text-gray-500">Loading your habits...</div>}
+        
+        {!loading && habits.length > 0 && (
+          habits.map(h => (
+            <HabitRow
+              key={h.id} habit={h} days={daysInCurrentMonth}
+              onToggle={(id, date, inc) => toggleHabit(id, date, inc).then(() => undefined)}
+              onArchive={id => archiveHabit(id).then(() => undefined)}
+              onDelete={id => deleteHabit(id).then(() => undefined)}
+              getHabitProgress={getHabitProgress}
+              isMobile={isMobile}
+            />
+          ))
+        )}
+        
+        {!loading && habits.length === 0 && (
+          <div className={isMobile ? "" : "p-4"}>
+            <EmptyState onAddHabit={() => setIsAddHabitOpen(true)} />
           </div>
-          {/* Habit List */}
-          <div className="px-4">
-            {loading && <SkeletonGrid rows={3} cols={daysInCurrentMonth.length} cellClass="bg-gray-200 dark:bg-slate-700/60"/>}
-            {!loading && habits.map(h => (
-              <HabitRow
-                key={h.id}
-                habit={h}
-                days={daysInCurrentMonth}
-                onToggle={(id,date,inc) => 
-                  toggleHabit(id,date,inc).then(() => undefined)
-                }
-                onArchive={id => archiveHabit(id).then(() => undefined)}
-                onDelete={id => deleteHabit(id).then(() => undefined)}
-                getHabitProgress={getHabitProgress}/>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
-      {!loading && habits.length === 0 && <EmptyState/>}
-      <AddHabitForm/>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)}/>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <AddHabitDialog open={isAddHabitOpen} onClose={() => setIsAddHabitOpen(false)} />  
     </div>
   );
-};
-
-const SkeletonGrid : React.FC<{ rows : number ; cols : number ; cellClass : string}> = ({ rows , cols , cellClass }) => (
-  <div className="space-y-2">
-    {Array.from({ length : rows }).map((_,i) => (
-      <div key={i} className="grid grid-cols-[240px_1fr] gap-4 items-center py-3">
-        <div className={`h-12 rounded-lg ${cellClass} animate-pulse`}/>
-        <div className="flex gap-1">
-          {Array.from({ length : cols }).map((_,j) => (
-            <div key={j} className={`w-10 h-12 rounded-lg ${cellClass} animate-pulse flex-shrink-0`}/>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-);
+}
 
 const UnauthenticatedView: React.FC<{ onOpen(): void; open: boolean; onClose(): void }> = ({ onOpen, open, onClose }) => (
   <div className="py-24 flex flex-col items-center justify-center text-center">
-    <h3 className="text-xl font-semibold">Track your progress.</h3>
-    <p className="mt-2 text-gray-600 dark:text-gray-400">Sign in to get started.</p>
-    <Button className="mt-6" onClick={onOpen}><FiLogIn className="mr-2"/>Sign In</Button>
+    <h3 className="text-2xl font-bold">Track your progress.</h3>
+    <p className="mt-2 text-gray-600 dark:text-gray-400">Sign in to build habits that last.</p>
+    <Button className="mt-6" size="lg" onClick={onOpen}><FiLogIn className="mr-2" />Sign In to Get Started</Button>
     <AuthModal open={open} onClose={onClose} />
   </div>
 );
 
-const EmptyState: React.FC = () => (
-  <div className="py-16 text-center border-dashed border-2 border-gray-300 dark:border-slate-600 rounded-lg mt-8">
+const EmptyState: React.FC<{ onAddHabit: () => void }> = ({ onAddHabit }) => (
+  <div className="py-16 text-center">
     <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No habits yet!</h3>
-    <p className="mt-2 text-gray-500 dark:text-gray-400">Add one below to get started.</p>
+    <p className="mt-2 text-gray-500 dark:text-gray-400">Ready to build a new routine? Add your first habit.</p>
+    <Button variant="outline" className="mt-6" onClick={onAddHabit}><FiPlus className="mr-2"/>Add Your First Habit</Button>
   </div>
 );
-
-
-const MobileRow: React.FC<{ 
-  habit: Habit; 
-  onToggle: (habitId: string, date: string, increment?: number) => Promise<void>;
-  onArchive: (habitId: string) => Promise<void>;
-  onDelete: (habitId: string) => Promise<void>;
-  getHabitProgress: (habitId: string, date: string) => {
-    count: number;
-    target: number;
-    percentage: number;
-    done: boolean;
-  };
-}> = ({ habit, onToggle, onArchive, onDelete, getHabitProgress }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Show current week for mobile
-  const days = eachDayOfInterval({ 
-    start: startOfWeek(new Date(), { weekStartsOn: 1 }), 
-    end: endOfWeek(new Date(), { weekStartsOn: 1 }) 
-  });
-
-  const handleArchive = async () => {
-    setIsProcessing(true);
-    try {
-      await onArchive(habit.id);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsProcessing(true);
-    try {
-      await onDelete(habit.id);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <div className="p-4 rounded-lg bg-white dark:bg-slate-800/50 shadow-sm border border-gray-200 dark:border-slate-700">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div 
-            className="w-3 h-3 rounded-full flex-shrink-0" 
-            style={{ backgroundColor: habit.color }}
-          />
-          <span className="font-semibold truncate">{habit.name}</span>
-        </div>
-        <div className="flex space-x-1 flex-shrink-0">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleArchive}
-            disabled={isProcessing}
-          >
-            <FiArchive className="w-4 h-4"/>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleDelete}
-            disabled={isProcessing}
-          >
-            <FiTrash2 className="w-4 h-4"/>
-          </Button>
-        </div>
-      </div>
-      <div className="flex justify-between gap-1">
-        {days.map(d => (
-          <HabitCell 
-            key={d.toISOString()} 
-            habit={habit} 
-            date={d} 
-            onToggle={onToggle}
-            getHabitProgress={getHabitProgress}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
 
 export default Habits;

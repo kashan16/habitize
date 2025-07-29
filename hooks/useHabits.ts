@@ -51,25 +51,51 @@ const transformHabitStreakFromDB = (streakDB: HabitStreakDB): HabitStreak => ({
   total_completions: streakDB.total_completions ?? 0
 });
 
-const fetcher = async ([ _key , month , userId ] : [ string , string , string ]) : Promise<HabitWithLogs[]> => {
-  const startDate = format(startOfMonth(new Date(month)),'yyyy-MM-dd');
-  const endDate = format(endOfMonth(new Date(month)),'yyyy-MM-dd');
+const fetcher = async ([_key, month, userId]: [string, string, string]): Promise<HabitWithLogs[]> => {
+  const startDate = format(startOfMonth(new Date(month)), 'yyyy-MM-dd');
+  const endDate = format(endOfMonth(new Date(month)), 'yyyy-MM-dd');
 
-  const { data : habitsDB , error } = await supabase.from('habits').select(
-    `*,
-    habit_categories(*),
-    habit_logs!left(*),
-    habit_streaks!left(*)`
-  ).eq('user_id',userId).eq('is_active',true).gte('habit_logs.log_date',startDate).lte('habit_logs.log_date',endDate);
+  // First, get all active habits for the user
+  const { data: habitsDB, error: habitsError } = await supabase
+    .from('habits')
+    .select(`
+      *,
+      habit_categories(*),
+      habit_streaks!left(*)
+    `)
+    .eq('user_id', userId)
+    .eq('is_active', true);
 
-  if(error) {
-    console.error("Error fetching habits with logs : ",error);
-    throw error;
+  if (habitsError) {
+    console.error("Error fetching habits:", habitsError);
+    throw habitsError;
   }
 
+  if (!habitsDB || habitsDB.length === 0) {
+    return [];
+  }
+
+  // Then, get logs for these habits within the date range
+  const habitIds = habitsDB.map(h => h.id);
+  const { data: logsDB, error: logsError } = await supabase
+    .from('habit_logs')
+    .select('*')
+    .in('habit_id', habitIds)
+    .gte('log_date', startDate)
+    .lte('log_date', endDate);
+
+  if (logsError) {
+    console.error("Error fetching habit logs:", logsError);
+    throw logsError;
+  }
+
+  // Combine habits with their logs
   const habitsWithLogs = (habitsDB as any[]).map(habitDB => {
     const habit = transformHabitFromDB(habitDB);
-    const logs = habitDB.habit_logs ? habitDB.habit_logs.map(transformHabitLogFromDB) : [];
+    const logs = (logsDB || [])
+      .filter(log => log.habit_id === habit.id)
+      .map(transformHabitLogFromDB);
+    
     const streak = habitDB.habit_streaks && habitDB.habit_streaks.length > 0 
       ? transformHabitStreakFromDB(habitDB.habit_streaks[0]) 
       : undefined;
@@ -84,9 +110,9 @@ const fetcher = async ([ _key , month , userId ] : [ string , string , string ])
   return habitsWithLogs;
 };
 
-export function useHabits(month : string) {
+export function useHabits(month: string) {
   const { user } = useAuth();
-  const { data , error , mutate } = useSWR(user ? ['habits',month,user.id] : null , fetcher);
+  const { data, error, mutate } = useSWR(user ? ['habits', month, user.id] : null, fetcher);
 
   const toggleHabit = async (habitId: string, date: string, incrementValue = 1) => {
     if (!user) return toast.error("You must be logged in to update habits");
@@ -120,11 +146,11 @@ export function useHabits(month : string) {
         } else {
           // For counter habits, increment/decrement
           newCount = Math.max(0, (existingLog.current_count || 0) + incrementValue);
-          isDone = newCount >= habit.target_count;
+          isDone = newCount >= (habit.target_count || 1);
         }
 
         const completionPercentage = habit.habit_type === 'counter' 
-          ? Math.min(100, Math.round((newCount / habit.target_count) * 100))
+          ? Math.min(100, Math.round((newCount / (habit.target_count || 1)) * 100))
           : isDone ? 100 : 0;
 
         const { error } = await supabase
@@ -147,11 +173,11 @@ export function useHabits(month : string) {
           isDone = newCount > 0;
         } else {
           newCount = Math.max(0, incrementValue);
-          isDone = newCount >= habit.target_count;
+          isDone = newCount >= (habit.target_count || 1);
         }
 
         const completionPercentage = habit.habit_type === 'counter' 
-          ? Math.min(100, Math.round((newCount / habit.target_count) * 100))
+          ? Math.min(100, Math.round((newCount / (habit.target_count || 1)) * 100))
           : isDone ? 100 : 0;
 
         const { error } = await supabase
@@ -175,126 +201,127 @@ export function useHabits(month : string) {
     }
   };
 
-  const createHabit = async (habitData : {
-    name : string;
-    color ?: string
-    habit_type ?: 'boolean' | 'counter';
-    target_count ?: number;
-    frequency_type ?: 'daily' | 'weekly' | 'interval' | 'custom';
+  const createHabit = async (habitData: {
+    name: string;
+    color?: string
+    habit_type?: 'boolean' | 'counter';
+    target_count?: number;
+    frequency_type?: 'daily' | 'weekly' | 'interval' | 'custom';
     frequency_days?: number[];
     frequency_interval_days?: number;
     description?: string;
     difficulty_level?: 'easy' | 'medium' | 'hard';
     category_id?: string;
   }) => {
-    if(!user) return toast.error("You must be logged in to create a habit.");
+    if (!user) return toast.error("You must be logged in to create a habit.");
 
     try {
       const { error } = await supabase.from('habits').insert({
         ...habitData,
-        user_id : user.id,
-        habit_type : habitData.habit_type || 'boolean',
-        target_count : habitData.target_count || 1,
-        frequency_type : habitData.frequency_type || 'daily',
-        frequency_days : habitData.frequency_days || [0,1,2,3,4,5,6],
-        frequency_interval_days : habitData.frequency_interval_days || 1,
-        difficulty_level : habitData.difficulty_level || 'medium',
-        is_active : true
+        user_id: user.id,
+        habit_type: habitData.habit_type || 'boolean',
+        target_count: habitData.target_count || 1,
+        frequency_type: habitData.frequency_type || 'daily',
+        frequency_days: habitData.frequency_days || [0, 1, 2, 3, 4, 5, 6],
+        frequency_interval_days: habitData.frequency_interval_days || 1,
+        difficulty_level: habitData.difficulty_level || 'medium',
+        is_active: true
       }); 
-      if(error) throw error;
-      toast.success(`Habit "${habitData.name} created!"`);
+      if (error) throw error;
+      toast.success(`Habit "${habitData.name}" created!`);
       await mutate();
-    } catch(err : any) {
-      console.error("Error creating habit : ",err);
+    } catch (err: any) {
+      console.error("Error creating habit:", err);
       toast.error("Failed to create habit.");
     }
   };
 
-  const updateHabit = async (habitId : string , updates : Partial<Habit>) => {
-    if(!user) return toast.error("You must be logged in.");
+  const updateHabit = async (habitId: string, updates: Partial<Habit>) => {
+    if (!user) return toast.error("You must be logged in.");
 
     try {
-      const { error } = await supabase.from('habits').update(updates).eq('id',habitId);
-      if(error) throw error;
+      const { error } = await supabase.from('habits').update(updates).eq('id', habitId);
+      if (error) throw error;
       toast.success("Habit updated.");
       await mutate();
-    } catch (err : any) {
-      console.error("Error updating habit : ",err);
-      toast.success("Failed to update habit details.");
+    } catch (err: any) {
+      console.error("Error updating habit:", err);
+      toast.error("Failed to update habit details.");
     }
   };
 
-  const archiveHabit = async (habitId : string) => {
-    if(!user) return toast.error("You must be logged in.");
+  const archiveHabit = async (habitId: string) => {
+    if (!user) return toast.error("You must be logged in.");
     try {
-      const { error } = await supabase.from('habits').update({ is_active : false }).eq('id',habitId);
-      if(error) throw error;
+      const { error } = await supabase.from('habits').update({ is_active: false }).eq('id', habitId);
+      if (error) throw error;
       toast.success("Habit archived.");
-    } catch(err : any) {
-      console.error("Error archiving habit : ", err);
+      await mutate();
+    } catch (err: any) {
+      console.error("Error archiving habit:", err);
       toast.error("Failed to archive habit.");
     }
   };
 
-  const deleteHabit = async (habitId : string) => {
-    if(!user) return toast.error("You must be logged in.");
+  const deleteHabit = async (habitId: string) => {
+    if (!user) return toast.error("You must be logged in.");
     try {
-      const { error } = await supabase.from('habits').delete().eq('id',habitId).eq('user_id',user.id);
-      if(error) throw error;
+      const { error } = await supabase.from('habits').delete().eq('id', habitId).eq('user_id', user.id);
+      if (error) throw error;
       toast.success("Habit deleted successfully");
       mutate();
-    } catch(err : any) {
-      console.error("Error deleting habit : ",error);
+    } catch (err: any) {
+      console.error("Error deleting habit:", err);
       toast.error("Failed to delete habit.");
     }
   };
 
-  const isHabitCompleted = (habitId : string , date : string) : boolean => {
+  const isHabitCompleted = (habitId: string, date: string): boolean => {
     const habit = data?.find(h => h.id === habitId);
-    if(!habit) return false;
+    if (!habit) return false;
 
-    const dateStr = format(new Date(date),'yyyy-MM-dd');
+    const dateStr = format(new Date(date), 'yyyy-MM-dd');
     const log = habit.logs.find(l => l.log_date === dateStr);
     return log?.done || false;
   }
 
-  const getHabitProgress = (habitId : string , date : string) => {
+  const getHabitProgress = (habitId: string, date: string) => {
     const habit = data?.find(h => h.id === habitId);
-    if(!habit) {
+    if (!habit) {
       return {
-        count : 0,
-        target : 1,
-        percentage : 0,
-        done : false,
+        count: 0,
+        target: 1,
+        percentage: 0,
+        done: false,
       };
     }
 
-    const dateStr = format(new Date(date),'yyyy-MM-dd');
+    const dateStr = format(new Date(date), 'yyyy-MM-dd');
     const log = habit.logs.find(l => l.log_date === dateStr);
 
-    if(!log) {
+    if (!log) {
       return {
-        count : 0,
-        target : habit.target_count,
-        percentage : 0,
-        done : false,
+        count: 0,
+        target: habit.target_count || 1,
+        percentage: 0,
+        done: false,
       };
     }
 
     return {
-      count : log.current_count,
-      target : habit.target_count,
-      percentage : log.completion_percentage,
-      done : log.done,
+      count: log.current_count,
+      target: habit.target_count || 1,
+      percentage: log.completion_percentage,
+      done: log.done,
     }
   }
 
-  const getHabitStats = (habitId : string) => {
+  const getHabitStats = (habitId: string) => {
     const habit = data?.find(h => h.id === habitId);
-    if(!habit) return {
-      completed : 0,
-      total : 0,
-      percentage : 0
+    if (!habit) return {
+      completed: 0,
+      total: 0,
+      percentage: 0
     };
 
     const completed = habit.logs.filter(log => log.done).length;
@@ -308,8 +335,8 @@ export function useHabits(month : string) {
   };
 
   return {
-    habits : data || [],
-    loading : !error && !data,
+    habits: data || [],
+    loading: !error && !data,
     error,
     toggleHabit,
     createHabit,
@@ -322,4 +349,3 @@ export function useHabits(month : string) {
     mutate
   };
 }
-
