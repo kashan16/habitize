@@ -34,47 +34,6 @@ import type { Habit } from "@/types/habit";
 import { useHabits } from "@/hooks/useHabits";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
-const useLongPress = (
-  onLongPress: (e: React.MouseEvent | React.TouchEvent) => void,
-  onClick: (e: React.MouseEvent | React.TouchEvent) => void,
-  { delay = 400 } = {}
-) => {
-  const [longPressTriggered, setLongPressTriggered] = useState(false);
-  const timeout = useRef<NodeJS.Timeout | null>(null);
-  const target = useRef<EventTarget | null>(null);
-
-  const start = useCallback((event: React.MouseEvent | React.TouchEvent) => {
-    if (event.target) {
-      target.current = event.target;
-      event.target.addEventListener('contextmenu', e => e.preventDefault(), { once: true });
-    }
-    timeout.current = setTimeout(() => {
-      onLongPress(event);
-      setLongPressTriggered(true);
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const clear = useCallback((event: React.MouseEvent | React.TouchEvent, shouldTriggerClick = true) => {
-    timeout.current && clearTimeout(timeout.current);
-    if (shouldTriggerClick && !longPressTriggered) {
-      onClick(event);
-    }
-    setLongPressTriggered(false);
-    if (target.current) {
-      target.current.removeEventListener('contextmenu', e => e.preventDefault());
-    }
-  }, [onClick, longPressTriggered]);
-
-  return {
-    onMouseDown: (e: React.MouseEvent) => start(e),
-    onTouchStart: (e: React.TouchEvent) => start(e),
-    onMouseUp: (e: React.MouseEvent) => clear(e),
-    onMouseLeave: (e: React.MouseEvent) => clear(e, false),
-    onTouchEnd: (e: React.TouchEvent) => clear(e),
-  };
-};
-
-
 const COLOR_PRESETS = [
   { name: 'Sky Blue', hex: '#3B82F6' },
   { name: 'Mint Green', hex: '#10B981' },
@@ -236,7 +195,7 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onHabitCreated }) => {
         </div>
       )}
       
-      <RadioGroup value={form.frequency_type} onChange={(v) => onChange('frequency_type', v as any)} disabled={isSubmitting}>
+      <RadioGroup value={form.frequency_type} onChange={(v: 'daily' | 'weekly' | 'interval' | 'custom') => onChange('frequency_type', v)} disabled={isSubmitting}>
         <Label>Frequency</Label>
         <div className="grid grid-cols-3 gap-2">
           {frequencyOptions.map(o => (
@@ -384,11 +343,10 @@ interface HabitCellProps {
   date: Date;
   onToggle: (habitId: string, date: string, increment?: number) => Promise<void>;
   getHabitProgress: (habitId: string, date: string) => { count: number; target: number; percentage: number; done: boolean; };
-  isMobile: boolean;
 }
 
-const HabitCell: React.FC<HabitCellProps> = ({ habit, date, onToggle, getHabitProgress, isMobile }) => {
-  const { count, target, percentage, done } = getHabitProgress(habit.id, date.toISOString());
+const HabitCell: React.FC<HabitCellProps> = ({ habit, date, onToggle, getHabitProgress }) => {
+  const { count, target } = getHabitProgress(habit.id, date.toISOString());
   const future = isFuture(date) && !isToday(date);
   const [isUpdating, setIsUpdating] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'increment' | 'decrement'; show: boolean }>({ type: 'increment', show: false });
@@ -427,6 +385,7 @@ const HabitCell: React.FC<HabitCellProps> = ({ habit, date, onToggle, getHabitPr
   const clipPathId = `clip-${habit.id}-${format(date, 'yyyyMMdd')}`;
 
   if (habit.habit_type === 'boolean') {
+    const done = count > 0;
     return (
       <div className="flex-shrink-0 flex flex-col items-center gap-1.5 text-center">
         <span className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{format(date, 'E')}</span>
@@ -701,7 +660,6 @@ const HabitRow : React.FC<HabitRowProps> = ({
             date={d}
             onToggle={onToggle}
             getHabitProgress={getHabitProgress}
-            isMobile={isMobile}
           />
         ))}
       </div>
@@ -732,13 +690,6 @@ export const Habits : React.FC = () => {
     archiveHabit,
     getHabitProgress
   } = useHabits(format(currentMonth,'yyyy-MM-01'));
-
-  const handleMonthChange = (dir : 'prev' | 'next') => {
-    const newMonth = dir === 'prev' ?
-      subMonths(currentMonth,1) :
-      addMonths(currentMonth,1);
-    setCurrentMonth(newMonth);
-  }
 
   if (error) {
     return <div className="py-8"><div className="text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg p-4"><h3 className="font-semibold">Error loading habits</h3><p className="text-sm mt-1">{error.message}</p></div></div>;
