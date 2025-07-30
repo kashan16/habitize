@@ -394,7 +394,7 @@ const HabitCell: React.FC<HabitCellProps> = ({ habit, date, onToggle, getHabitPr
           onClick={handleBooleanToggle}
           className={clsx(
             'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 group',
-            done ? 'text-white shadow-md' : 'bg-gray-100 dark:bf-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 bg-opacity-50',
+            done ? 'text-white shadow-md' : 'bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 bg-opacity-50',
             isToday(date) && !done && 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900',
             (future || isUpdating) && 'opacity-50 cursor-not-allowed',
             'active:scale-95'
