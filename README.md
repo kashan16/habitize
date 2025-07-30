@@ -169,5 +169,5 @@ If you encounter any issues or have questions:
 <div align="center">
   <strong>Built with ❤️ by Kashan Yunus</strong>
   <br>
-  <em>Track your habits. Transform your life.</em>
-</div>s
+  <em>Track your habits. Transform your life</em>
+</div>
