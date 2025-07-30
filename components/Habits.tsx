@@ -388,25 +388,33 @@ const HabitCell: React.FC<HabitCellProps> = ({ habit, date, onToggle, getHabitPr
     const done = count > 0;
     return (
       <div className="flex-shrink-0 flex flex-col items-center gap-1.5 text-center">
-        <span className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{format(date, 'E')}</span>
+        <span className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{format(date,'E')}</span>
         <button
           disabled={future || isUpdating}
           onClick={handleBooleanToggle}
           className={clsx(
             'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 group',
-            done ? 'text-white shadow-md' : 'bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 bg-opacity-50',
+            done ? 'text-white shadow-md' : 'bg-gray-100 dark:bf-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 bg-opacity-50',
             isToday(date) && !done && 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900',
             (future || isUpdating) && 'opacity-50 cursor-not-allowed',
             'active:scale-95'
           )}
-          style={done ? { backgroundColor: habit.color } : {}}
+          style={ done ? { backgroundColor : habit.color } : {} }
         >
           <div className="flex flex-col items-center">
-            {done ? <FiCheck className="w-6 h-6 text-white/90" /> : <span className={clsx("font-semibold text-xl", 'text-gray-800 dark:text-gray-200')}>{dayText}</span>}
+            <span className={
+              clsx(
+                "font-semibold text-xl",
+                done ? "text-white" : "text-gray-800 dark:text-gray-200"
+              )
+            }>{dayText}</span>
+            {done && (
+              <FiCheck className="w-3 h-3 text-white/80 mt-0.5" />
+            )}            
           </div>
         </button>
       </div>
-    );
+    )
   }
 
   const fillPercentage = Math.min(count / target, 1);
