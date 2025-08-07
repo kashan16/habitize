@@ -1,0 +1,8 @@
+{
+    "name" : "Habitize",
+    "short_name" : "Habitize",
+    "description" : "A modern, intuitive habit-tracking application",
+    "start_url" : "/",
+    "display" : "standalone",
+    "background_color" : "#000000"
+}

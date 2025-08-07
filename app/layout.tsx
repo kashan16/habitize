@@ -1,12 +1,13 @@
+import ClientProvider from "@/components/ClientProvider";
+import Navbar from "@/components/Header";
+import { AuthProvider } from "@/context/AuthContext";
+import { HabitProvider } from "@/context/HabitContext";
+import { PageProvider } from "@/context/PageContext";
+import { SupabaseProvider } from "@/context/SupabaseContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SupabaseProvider } from "@/context/SupabaseContext";
-import { AuthProvider } from "@/context/AuthContext";
-import { ThemeProvider } from "@/context/ThemeContext";
-import Navbar from "@/components/Header";
-import { PageProvider } from "@/context/PageContext";
-import { HabitProvider } from "@/context/HabitContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,6 +22,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Habitize",
   description: "Log your habits",
+  manifest : '/manifest.json'
 };
 
 export default function RootLayout({
@@ -29,7 +31,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // wrap in <html> so Next knows these are global props
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable}`}
@@ -45,8 +46,10 @@ export default function RootLayout({
             <AuthProvider>
               <HabitProvider>
                 <PageProvider>
-                <Navbar />
-                {children}
+                  <ClientProvider>
+                    <Navbar />
+                    {children}                    
+                  </ClientProvider>
                 </PageProvider>
               </HabitProvider>
             </AuthProvider>
@@ -56,3 +59,4 @@ export default function RootLayout({
     </html>
   );
 }
+
