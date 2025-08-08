@@ -1,0 +1,5 @@
+/build/*
+!/build/.npmkeep
+# Android
+android/*.jks
+android/keystore.properties

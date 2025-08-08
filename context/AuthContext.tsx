@@ -2,8 +2,10 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/store/authStore";
-import { User , Session } from "@supabase/supabase-js";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { App } from '@capacitor/app';
+import { PluginListenerHandle } from '@capacitor/core';
+import { Session, User } from "@supabase/supabase-js";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 
 interface AuthContextType {
     user : User | null;
@@ -30,6 +32,8 @@ export const AuthProvider : React.FC<AuthProviderProps> = ({ children }) => {
     const { user , session , loading , error , initialize } = useAuthStore();
 
     useEffect(() => {
+        let isMounted = true;
+        let appUrlListenerHandle : PluginListenerHandle | null = null;
         initialize();
         const { data : { subscription } } = supabase.auth.onAuthStateChange(
             async( event , session ) => {
@@ -41,8 +45,45 @@ export const AuthProvider : React.FC<AuthProviderProps> = ({ children }) => {
                 });
             }
         );
+        (async () => {
+            try {
+                const handle = await App.addListener('appUrlOpen' , async ({ url }) => {
+                    console.log('App opened with URL : ',url);
+                    const redirectUrl = new URL(url);
+                    if(redirectUrl.pathname === '/auth/callback') {
+                        try {
+                            const { data , error } = await supabase.auth.exchangeCodeForSession(url);
+                            if(error) {
+                                console.error('Error exchanging code for session : ', error.message);
+                            } else {
+                                console.log('Session updated via deep link : ', data);
+                                useAuthStore.setState({
+                                    user : data.session?.user || null,
+                                    session : data.session,
+                                    loading : false,
+                                    error : null
+                                });
+                            }
+                        } catch(err) {
+                            console.error("Exchange failed : ",err);
+                        }
+                    }
+                });
+                if(isMounted) {
+                    appUrlListenerHandle = handle;
+                } else {
+                    handle.remove();
+                }
+            } catch(err) {
+                console.error('Failed to setup appUrl Open listener : ',err);
+            }
+        })();
         return () => {
+            isMounted = false
             subscription.unsubscribe();
+            if(appUrlListenerHandle) {
+                appUrlListenerHandle.remove();
+            }
         };
     },[initialize]);
 
@@ -88,5 +129,5 @@ export const withAuth = <P extends object>(
     };
 
     AuthenticatedComponent.displayName = `withAuth(${Component.displayName || Component.name})`;
-    return AuthenticatorAssertionResponse;
+    return AuthenticatedComponent;
 }
