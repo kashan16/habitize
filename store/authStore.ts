@@ -1,3 +1,4 @@
+import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
@@ -179,6 +180,26 @@ export const useAuthStore = create<AuthState>((set) =>({
                 session : session || null,
                 loading : false
             });
+
+            if(Capacitor.isNativePlatform()) {
+                const launchUrl = await App.getLaunchUrl();
+                if(launchUrl?.url) {
+                    const url = launchUrl.url;
+                    const redirectUrl = new URL(url);
+                    if(redirectUrl.pathname === '/auth/callback') {
+                        const { data } = await supabase.auth.exchangeCodeForSession(url);
+                        if(data?.session) {
+                            set({
+                                user : data.session.user,
+                                session : data.session,
+                                loading : false
+                            });
+                            return;
+                        }
+                    }
+                }
+            }
+            set({ loading : false});
         } catch (err) {
             console.error("Error initializing AUTH",err);
             set({
