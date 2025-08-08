@@ -1,13 +1,16 @@
+import { Capacitor } from '@capacitor/core';
+import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
-import { create } from 'zustand';
-import type { User, Session } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { create } from 'zustand';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export const supabase = createClient(supabaseUrl,supabaseAnonKey);
 
+const getRedirectBaseUrl = () => {
+    return Capacitor.isNativePlatform() ? 'habitize://' : window.location.origin;
+}
 interface AuthState {
     user : User | null;
     session : Session | null;
@@ -24,7 +27,7 @@ interface AuthState {
     initialize : () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set,get) =>({
+export const useAuthStore = create<AuthState>((set) =>({
     user : null,
     session : null,
     loading : false,
@@ -110,25 +113,27 @@ export const useAuthStore = create<AuthState>((set,get) =>({
     signInWithGoogle : async () => {
         set({ loading : true , error : null });
         try {
-            const { data , error } = await supabase.auth.signInWithOAuth({
+            const redirectTo = `${getRedirectBaseUrl()}/auth/callback`
+            const error = await supabase.auth.signInWithOAuth({
                 provider : 'google',
                 options : {
-                    redirectTo : window.location.origin,
+                    redirectTo
                 },
             });
             if(error) {
                 throw error;
             }
         } catch (error) {
-            console.error("Google sign-In error");
+            console.error("Google sign-In error", error);
             set({ error : 'Failed to sign in with google' , loading : false});
         }
     },
     sendPasswordResetEmail :  async ( email :string ) => {
         set({ loading : true , error : null });
         try {
+            const redirectTo = `${getRedirectBaseUrl()}/reset-password`
             const { error } = await supabase.auth.resetPasswordForEmail(email , {
-                redirectTo : `${window.location.origin}/reset-password`,
+                redirectTo,
             });
             if(error) {
                 throw error;
